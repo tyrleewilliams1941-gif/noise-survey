@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noise Survey</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:#f0f4f8;--surface:#fff;--surface2:#e8edf3;--border:#c8d0db;
+    --accent:#0066cc;--accent-dim:rgba(0,102,204,0.12);--accent-dim2:rgba(0,102,204,0.06);
+    --text:#1a2332;--text-dim:#5a6a7e;--text-mid:#3d5068;
+    --danger:#d93025;--warn:#e67e00;--success:#2e7d32;--radius:10px;
+  }
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px;}
+  .app-title{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:600;white-space:nowrap;}
+  .header-meta{display:flex;gap:6px;flex:1;max-width:600px;}
+  .header-meta input{background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;padding:5px 9px;outline:none;flex:1;transition:border-color .15s;}
+  .header-meta input:focus{border-color:var(--accent);}
+  .header-meta input::placeholder{color:var(--text-dim);}
+  .header-actions{display:flex;gap:6px;align-items:center;flex-shrink:0;}
+  .floor-tabs-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;gap:2px;overflow-x:auto;flex-shrink:0;}
+  .floor-tabs-bar::-webkit-scrollbar{height:3px;}
+  .floor-tabs-bar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+  .floor-tab{padding:8px 15px;font-size:13px;font-weight:500;color:var(--text-dim);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s;font-family:'DM Sans',sans-serif;}
+  .floor-tab:hover{color:var(--text-mid);}
+  .floor-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .floor-tab.special-tab{font-style:italic;}
+  .add-floor-btn{padding:5px 11px;font-size:17px;color:var(--text-dim);background:none;border:none;cursor:pointer;transition:color .15s;line-height:1;}
+  .add-floor-btn:hover{color:var(--accent);}
+  .main{display:flex;flex:1;overflow:hidden;}
+  .sidebar{width:195px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
+  .sidebar-header{padding:10px 13px 8px;font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+  .point-count{background:var(--accent-dim);color:var(--accent);padding:2px 6px;border-radius:20px;font-size:10px;font-weight:600;}
+  .point-list{flex:1;overflow-y:auto;padding:4px 0;}
+  .point-list::-webkit-scrollbar{width:4px;}
+  .point-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+  .point-item{padding:6px 13px;cursor:pointer;display:flex;align-items:center;gap:7px;border-left:2px solid transparent;transition:background .12s,border-color .12s;}
+  .point-item:hover{background:var(--accent-dim2);}
+  .point-item.active{background:var(--accent-dim);border-left-color:var(--accent);}
+  .point-id{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);min-width:32px;font-weight:600;}
+  .point-meta{flex:1;min-width:0;}
+  .point-db{font-size:12px;font-weight:500;color:var(--text);}
+  .point-loc{font-size:11px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:105px;}
+  .point-dots{display:flex;gap:3px;flex-shrink:0;}
+  .dot-pin{width:5px;height:5px;border-radius:50%;background:var(--accent);opacity:.7;}
+  .dot-warn{width:5px;height:5px;border-radius:50%;background:var(--warn);}
+  .dot-ok{width:5px;height:5px;border-radius:50%;background:var(--success);}
+  .content{flex:1;display:flex;overflow:hidden;}
+  .form-panel{width:390px;flex-shrink:0;display:flex;flex-direction:column;padding:14px;gap:12px;overflow-y:auto;border-right:1px solid var(--border);}
+  .form-panel::-webkit-scrollbar{width:4px;}
+  .form-panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+  .stats-bar{display:flex;gap:8px;}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:9px 11px;flex:1;}
+  .stat-label{font-size:9px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin-bottom:2px;}
+  .stat-value{font-size:16px;font-weight:600;color:var(--accent);font-family:'DM Mono',monospace;}
+  .entry-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;width:100%;}
+  .entry-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;}
+  .point-label{font-family:'DM Mono',monospace;font-size:19px;color:var(--accent);font-weight:600;}
+  .point-timestamp{font-size:10px;color:var(--text-dim);font-family:'DM Mono',monospace;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+  .form-group{display:flex;flex-direction:column;gap:4px;}
+  .form-group.full{grid-column:1/-1;}
+  label{font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);}
+  label.required::after{content:' *';color:var(--danger);}
+  input[type="number"],input[type="text"],textarea,select{background:#f8fafc;border:1.5px solid var(--border);border-radius:7px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:8px 10px;transition:border-color .15s,box-shadow .15s;outline:none;width:100%;}
+  input.field-error{border-color:var(--danger);background:#fff5f5;}
+  input[type="number"]:focus,input[type="text"]:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);}
+  textarea{resize:vertical;min-height:56px;font-size:13px;}
+  .form-actions{display:flex;gap:7px;margin-top:10px;}
+  button{font-family:'DM Sans',sans-serif;cursor:pointer;border:none;border-radius:7px;font-size:13px;font-weight:500;transition:all .15s;}
+  .btn-primary{background:var(--accent);color:#fff;padding:8px 16px;flex:1;}
+  .btn-primary:hover{filter:brightness(1.1);}
+  .btn-secondary{background:var(--surface2);color:var(--text-mid);padding:8px 12px;border:1px solid var(--border);}
+  .btn-secondary:hover{border-color:var(--text-mid);color:var(--text);}
+  .btn-danger{background:rgba(217,48,37,.08);color:var(--danger);padding:8px 11px;border:1px solid rgba(217,48,37,.2);}
+  .btn-danger:hover{background:rgba(217,48,37,.16);}
+  .btn-export{background:var(--surface);color:var(--accent);padding:6px 11px;border:1.5px solid var(--accent);font-size:12px;font-weight:600;}
+  .btn-export:hover{background:var(--accent-dim);}
+  .btn-sm{padding:5px 10px;font-size:12px;}
+  .btn-icon{padding:5px 8px;font-size:14px;background:var(--surface2);border:1px solid var(--border);color:var(--text-mid);}
+  .btn-icon:hover{border-color:var(--accent);color:var(--accent);}
+  .label-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;font-size:12px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text-mid);font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;transition:all .15s;}
+  .label-btn:hover{border-color:var(--text-mid);}
+  .pin-hint{font-size:11px;color:var(--text-dim);padding:7px 10px;background:var(--accent-dim2);border:1px solid var(--border);border-radius:7px;display:flex;align-items:center;gap:7px;}
+  .pin-hint .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex-shrink:0;animation:pulse 1.5s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.5)}}
+  .incomplete-banner{background:#fff8e1;border:1px solid #ffe082;border-radius:7px;padding:8px 12px;font-size:12px;color:#7c5a00;display:flex;align-items:center;gap:8px;}
+  .undo-bar{background:#e8f0fe;border:1px solid #adc4f5;border-radius:7px;padding:7px 12px;font-size:12px;color:#1a5cb8;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .undo-bar button{background:none;border:none;color:#1a5cb8;font-weight:600;font-size:12px;text-decoration:underline;cursor:pointer;padding:0;}
+  .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-dim);gap:8px;font-size:13px;flex:1;padding:40px;text-align:center;}
+  .empty-icon{font-size:30px;opacity:.4;}
+  .plan-panel{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+  .plan-toolbar{padding:7px 13px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px;flex-shrink:0;background:var(--surface);flex-wrap:wrap;}
+  .plan-toolbar-label{font-size:10px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);flex:1;min-width:80px;}
+  .plan-mode-btn{padding:4px 10px;font-size:12px;font-weight:500;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text-mid);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
+  .plan-mode-btn.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);}
+  .plan-mode-btn:hover:not(.active){border-color:var(--text-mid);}
+  .plan-canvas-wrapper{flex:1;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;background:#e4eaf2;}
+  .plan-drop-zone{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--text-dim);font-size:13px;border:2px dashed var(--border);border-radius:14px;padding:40px;cursor:pointer;transition:border-color .2s,color .2s;text-align:center;}
+  .plan-drop-zone:hover{border-color:var(--accent);color:var(--text-mid);}
+  .plan-drop-zone .drop-icon{font-size:36px;opacity:.5;}
+  #planCanvas{position:absolute;top:0;left:0;cursor:crosshair;display:none;}
+  .zoom-controls{position:absolute;bottom:12px;right:12px;display:flex;flex-direction:column;gap:4px;z-index:10;}
+  .zoom-btn{width:27px;height:27px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text-mid);font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;}
+  .zoom-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .legend{position:absolute;bottom:12px;left:12px;display:flex;flex-direction:column;gap:4px;background:rgba(255,255,255,.92);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:11px;color:var(--text-dim);}
+  .legend-item{display:flex;align-items:center;gap:6px;}
+  .legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  /* FULL-WIDTH PANELS */
+  .full-panel{flex:1;overflow-y:auto;padding:20px;display:none;flex-direction:column;gap:16px;}
+  .full-panel::-webkit-scrollbar{width:6px;}
+  .full-panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+  .full-panel.visible{display:flex;}
+  .panel-title{font-size:18px;font-weight:600;color:var(--text);}
+  .panel-subtitle{font-size:13px;color:var(--text-dim);margin-top:3px;}
+  /* SUMMARY */
+  .summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+  .summary-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+  .summary-card-title{font-size:13px;font-weight:600;color:var(--accent);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
+  .summary-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--surface2);font-size:13px;}
+  .summary-row:last-child{border-bottom:none;}
+  .summary-row-label{color:var(--text-dim);}
+  .summary-row-value{font-weight:600;font-family:'DM Mono',monospace;color:var(--text);}
+  .progress-bar-wrap{background:var(--surface2);border-radius:4px;height:6px;overflow:hidden;margin-top:8px;}
+  .progress-bar-fill{height:100%;border-radius:4px;background:var(--accent);transition:width .4s;}
+  .incomplete-list{margin-top:10px;font-size:12px;display:flex;flex-wrap:wrap;gap:4px;}
+  .incomplete-tag{background:#fff3e0;border:1px solid #ffcc80;border-radius:4px;padding:2px 7px;color:var(--warn);}
+  /* DOSIMETRY */
+  .dose-ref-note{font-size:11px;color:var(--text-dim);background:var(--surface);border-radius:7px;padding:10px 14px;border:1px solid var(--border);line-height:1.7;}
+  .dose-ref-note strong{color:var(--text-mid);}
+  .dose-summary-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;display:flex;gap:24px;flex-wrap:wrap;align-items:center;}
+  .dose-summary-stat .slabel{font-size:9px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin-bottom:2px;}
+  .dose-summary-stat .svalue{font-size:17px;font-weight:600;font-family:'DM Mono',monospace;color:var(--accent);}
+  .dosimetry-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;}
+  .dose-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;transition:box-shadow .15s,border-color .15s;}
+  .dose-card:focus-within{box-shadow:0 0 0 2px var(--accent);border-color:var(--accent);}
+  .dose-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .dose-card-num{font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-dim);padding:3px 8px;border-radius:20px;}
+  .dose-status{width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0;transition:background .2s;}
+  .dose-status.partial{background:var(--warn);}
+  .dose-status.complete{background:var(--success);}
+  .dose-form{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .dose-form .span2{grid-column:1/-1;}
+  .dose-form label{font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:3px;}
+  .dose-form input,.dose-form select{background:#f8fafc;border:1.5px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 9px;outline:none;width:100%;transition:border-color .15s,box-shadow .15s;}
+  .dose-form input:focus,.dose-form select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);}
+  .dose-form input::placeholder{color:var(--text-dim);opacity:.6;}
+  .dose-result-bar{margin-top:12px;padding-top:10px;border-top:1px solid var(--surface2);display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:26px;}
+  .dose-result{font-family:'DM Mono',monospace;font-size:12px;color:var(--text-dim);}
+  .dose-badge{font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700;font-family:'DM Mono',monospace;}
+  .dose-badge.empty{background:var(--surface2);color:var(--text-dim);}
+  .dose-badge.below{background:#e8f5e9;color:var(--success);}
+  .dose-badge.laev{background:#fff3e0;color:var(--warn);}
+  .dose-badge.uaev{background:#fff3e0;color:var(--warn);}
+  .dose-badge.elv{background:#ffebee;color:var(--danger);}
+  /* MODALS */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px);}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;width:360px;box-shadow:0 20px 50px rgba(0,0,0,.2);}
+  .modal h3{font-size:15px;font-weight:600;margin-bottom:13px;}
+  .modal input{margin-bottom:13px;}
+  .modal-actions{display:flex;gap:8px;}
+  .modal p{font-size:13px;color:var(--text-dim);margin-bottom:16px;line-height:1.5;}
+  .hidden{display:none!important;}
+  .toast{position:fixed;bottom:18px;right:18px;background:var(--accent);color:#fff;padding:8px 15px;border-radius:8px;font-size:13px;font-weight:500;opacity:0;transform:translateY(8px);transition:all .25s;z-index:200;pointer-events:none;}
+  .toast.show{opacity:1;transform:translateY(0);}
+  .toast.error{background:var(--danger);}
+  .print-header{display:none;margin-bottom:24px;}
+  .print-header h1{font-size:20px;font-weight:700;}
+  .print-header .print-meta{font-size:12px;color:var(--text-dim);margin-top:6px;display:flex;gap:20px;flex-wrap:wrap;}
+  @media print{
+    body{height:auto;overflow:auto;}
+    header,.floor-tabs-bar,.sidebar,.form-panel,.plan-toolbar,.zoom-controls,.legend,.modal-overlay,.toast{display:none!important;}
+    .main,.content{display:block;overflow:visible;}
+    .plan-panel{display:none;}
+    .full-panel.visible{display:block!important;padding:0;}
+    .print-header{display:block!important;}
+    @page{margin:15mm;}
+  }
+</style>
+</head>
+<body>
+<header>
+  <span class="app-title">&#9679; NoiseSurvey</span>
+  <div class="header-meta">
+    <input type="text" id="metaProject" placeholder="Project name" maxlength="80">
+    <input type="text" id="metaSite" placeholder="Site / building" maxlength="80">
+    <input type="text" id="metaSurveyor" placeholder="Surveyor" maxlength="60">
+  </div>
+  <div class="header-actions">
+    <button class="btn-icon" onclick="undo()" title="Undo (Ctrl+Z)">&#8617;</button>
+    <button class="btn-export" onclick="exportCSV()">Export CSV</button>
+    <button class="btn-secondary btn-sm" onclick="saveSession()">Save</button>
+    <button class="btn-secondary btn-sm" onclick="document.getElementById('loadFileInput').click()">Load</button>
+    <input type="file" id="loadFileInput" accept=".json" style="display:none" onchange="loadSession(event)">
+    <button class="btn-secondary btn-sm" onclick="printSummary()">Print</button>
+    <button class="btn-secondary btn-sm" onclick="openRenameFloor()">Rename Floor</button>
+    <button class="btn-danger btn-sm" onclick="deleteFloor()">Delete Floor</button>
+  </div>
+</header>
+<div class="floor-tabs-bar" id="floorTabsBar">
+  <button class="add-floor-btn" onclick="addFloor()" title="Add floor">+</button>
+</div>
+<div class="main">
+  <div class="sidebar">
+    <div class="sidebar-header">Points <span class="point-count" id="pointCountBadge">0</span></div>
+    <div class="point-list" id="pointList"></div>
+    <div style="padding:9px 11px;border-top:1px solid var(--border);">
+      <button class="btn-secondary" style="width:100%;font-size:12px;" onclick="addPoint()">+ New Point</button>
+    </div>
+  </div>
+  <div class="content">
+    <!-- FORM PANEL -->
+    <div class="form-panel" id="formPanel">
+      <div class="stats-bar">
+        <div class="stat"><div class="stat-label">Points</div><div class="stat-value" id="statTotal">0</div></div>
+        <div class="stat"><div class="stat-label">Done</div><div class="stat-value" id="statComplete">0</div></div>
+        <div class="stat"><div class="stat-label">Max dB</div><div class="stat-value" id="statMaxDb">--</div></div>
+        <div class="stat"><div class="stat-label">Max Peak</div><div class="stat-value" id="statMaxPeak">--</div></div>
+      </div>
+      <div class="incomplete-banner hidden" id="incompleteBanner">&#9888; <span id="incompleteBannerText"></span></div>
+      <div class="undo-bar hidden" id="undoBar"><span id="undoMsg"></span><button onclick="undo()">Undo</button></div>
+      <div class="empty-state" id="emptyState"><div class="empty-icon">&#128203;</div><div>No point selected</div><div style="font-size:11px;">Add a point or select one from the list</div></div>
+      <div class="entry-card hidden" id="entryCard">
+        <div class="entry-card-header">
+          <span class="point-label" id="entryPointLabel">P001</span>
+          <span class="point-timestamp" id="entryTimestamp"></span>
+        </div>
+        <div class="form-grid">
+          <div class="form-group"><label class="required">dB Level</label><input type="number" id="inputDb" placeholder="72.4" step="0.1"></div>
+          <div class="form-group"><label class="required">Peak dB</label><input type="number" id="inputPeak" placeholder="85.2" step="0.1"></div>
+          <div class="form-group full"><label>Location Description</label><textarea id="inputLocation" placeholder="e.g. North wall, adjacent to HVAC, 1.5m height"></textarea></div>
+          <div class="form-group full"><label>Notes / Flags</label><input type="text" id="inputNotes" placeholder="e.g. High background, repeated, obstructed"></div>
+        </div>
+        <div class="pin-hint hidden" id="pinHint"><div class="dot"></div>Click the floor plan to place this point's pin</div>
+        <div class="form-actions">
+          <button class="btn-secondary" onclick="saveAndPrev()">Prev</button>
+          <button class="btn-primary" onclick="saveAndNext()">Save and Next</button>
+          <button class="btn-danger" onclick="confirmDeletePoint()">Delete</button>
+        </div>
+      </div>
+    </div>
+    <!-- FLOOR PLAN -->
+    <div class="plan-panel" id="planPanel">
+      <div class="plan-toolbar">
+        <span class="plan-toolbar-label" id="planToolbarLabel">Floor Plan</span>
+        <button class="plan-mode-btn active" id="modePinBtn" onclick="setMode('pin')">Place Pins</button>
+        <button class="plan-mode-btn" id="modePanBtn" onclick="setMode('pan')">Pan</button>
+        <label class="label-btn">Import Plan<input type="file" id="planFileInput" accept="image/*" style="display:none" onchange="loadPlan(event)"></label>
+        <button class="btn-danger btn-sm" onclick="clearPlan()">Remove Plan</button>
+      </div>
+      <div class="plan-canvas-wrapper" id="planWrapper">
+        <div class="plan-drop-zone" id="planDropZone" onclick="document.getElementById('planFileInput').click()">
+          <div class="drop-icon">&#128506;</div>
+          <strong>Import a floor plan</strong>
+          <span>Click to browse or drag and drop an image</span>
+        </div>
+        <canvas id="planCanvas"></canvas>
+        <div class="zoom-controls" id="zoomControls" style="display:none">
+          <button class="zoom-btn" onclick="zoom(1.2)">+</button>
+          <button class="zoom-btn" onclick="zoom(0.8)">-</button>
+          <button class="zoom-btn" onclick="resetView()" style="font-size:10px;">Reset</button>
+        </div>
+        <div class="legend" id="planLegend" style="display:none">
+          <div class="legend-item"><div class="legend-dot" style="background:#0066cc"></div>Selected</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#2e7d32"></div>Complete</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#e67e00"></div>Incomplete</div>
+        </div>
+      </div>
+    </div>
+    <!-- SUMMARY PANEL -->
+    <div class="full-panel" id="summaryPanel">
+      <div class="print-header" id="printHeader"><h1 id="printTitle">Noise Survey Report</h1><div class="print-meta" id="printMeta"></div></div>
+      <div><div class="panel-title">Survey Summary</div><div class="panel-subtitle" id="summarySubtitle"></div></div>
+      <div class="summary-grid" id="summaryGrid"></div>
+    </div>
+    <!-- DOSIMETRY PANEL -->
+    <div class="full-panel" id="dosimetryPanel">
+      <div>
+        <div class="panel-title">Personal Dosimetry</div>
+        <div class="panel-subtitle">Noise exposure records for workers wearing personal noise dosimeters</div>
+      </div>
+      <div class="dose-ref-note">
+        <strong>UK reference levels - Control of Noise at Work Regulations 2005:</strong><br>
+        Lower Exposure Action Value (LAEV): LEP,d 80 dB(A) &nbsp;|&nbsp;
+        Upper Exposure Action Value (UAEV): LEP,d 85 dB(A) &nbsp;|&nbsp;
+        Exposure Limit Value (ELV): LEP,d 87 dB(A)
+      </div>
+      <div class="dose-summary-bar">
+        <div class="dose-summary-stat"><div class="slabel">Workers</div><div class="svalue" id="doseStatWorkers">10</div></div>
+        <div class="dose-summary-stat"><div class="slabel">Recorded</div><div class="svalue" id="doseStatRecorded">0</div></div>
+        <div class="dose-summary-stat"><div class="slabel">Above LAEV (80+)</div><div class="svalue" id="doseStatLAEV" style="color:var(--warn)">0</div></div>
+        <div class="dose-summary-stat"><div class="slabel">Above UAEV (85+)</div><div class="svalue" id="doseStatUAEV" style="color:var(--danger)">0</div></div>
+        <div style="margin-left:auto;display:flex;gap:8px;">
+          <button class="btn-export" onclick="exportDosimetryCSV()">Export Dosimetry CSV</button>
+          <button class="btn-secondary btn-sm" onclick="clearAllDosimetry()">Clear All</button>
+        </div>
+      </div>
+      <div class="dosimetry-grid" id="dosimetryGrid"></div>
+    </div>
+  </div>
+</div>
+<!-- MODALS -->
+<div class="modal-overlay hidden" id="floorModal">
+  <div class="modal">
+    <h3 id="floorModalTitle">Add Floor</h3>
+    <input type="text" id="floorNameInput" placeholder="e.g. Ground Floor, Level 2...">
+    <div class="modal-actions">
+      <button class="btn-secondary" style="flex:1" onclick="closeFloorModal()">Cancel</button>
+      <button class="btn-primary" style="flex:1" onclick="confirmFloor()">Confirm</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay hidden" id="deleteModal">
+  <div class="modal">
+    <h3>Delete Point?</h3>
+    <p>This will remove <strong id="deletePointLabel"></strong> and all its data. This can be undone.</p>
+    <div class="modal-actions">
+      <button class="btn-secondary" style="flex:1" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn-danger" style="flex:1" onclick="deletePoint()">Delete</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+var floors=[],currentFloorId=null,currentPointId=null,activeView='floor',floorModalMode='add',floorIdCounter=0,pointIdCounter={},undoStack=[];
+var dosimetryData=Array.from({length:10},function(_,i){return{slot:i+1,name:'',title:'',hoursWork:'',laeqd:'',lcpeak:'',hpType:'',hpRating:'',notes:''};});
+var planImg=null,viewOffsetX=0,viewOffsetY=0,viewScale=1,mode='pin',isPanning=false,panStart={x:0,y:0},panOrigin={x:0,y:0};
+var HP_TYPES=['None','Earplugs (disposable)','Earplugs (reusable)','Earmuffs','Custom moulded','Earmuffs + earplugs'];
+
+function gfid(){return 'f'+(++floorIdCounter);}
+function gpid(fid){if(!pointIdCounter[fid])pointIdCounter[fid]=0;return ++pointIdCounter[fid];}
+function gf(fid){return floors.find(function(f){return f.id===fid;});}
+function gcf(){return gf(currentFloorId);}
+
+function snapshot(desc){
+  var imgs={};
+  floors.forEach(function(f){if(f.planImage)imgs[f.id]=f.planImage;});
+  var state=JSON.stringify({floors:floors.map(function(f){return Object.assign({},f,{planImage:f.planImage?'[img]':null,points:f.points.map(function(p){return Object.assign({},p);})});}),floorIdCounter:floorIdCounter,pointIdCounter:pointIdCounter,dosimetryData:dosimetryData});
+  undoStack.push({desc:desc,state:state,imgs:imgs});
+  if(undoStack.length>30)undoStack.shift();
+  document.getElementById('undoBar').classList.add('hidden');
+}
+
+function undo(){
+  if(!undoStack.length){showToast('Nothing to undo',true);return;}
+  var snap=undoStack.pop();
+  var parsed=JSON.parse(snap.state);
+  floors=parsed.floors.map(function(f){return Object.assign({},f,{planImage:snap.imgs[f.id]||null,points:f.points.map(function(p){return Object.assign({},p);})});});
+  floorIdCounter=parsed.floorIdCounter;pointIdCounter=parsed.pointIdCounter;
+  if(parsed.dosimetryData)dosimetryData=parsed.dosimetryData;
+  if(!gf(currentFloorId))currentFloorId=floors[0]?floors[0].id:null;
+  currentPointId=null;
+  renderAll();loadFloorPlan();
+  if(activeView==='dosimetry')renderDosimetryGrid();
+  document.getElementById('undoMsg').textContent='Undone: '+snap.desc;
+  document.getElementById('undoBar').classList.remove('hidden');
+  showToast('Undone: '+snap.desc);
+}
+
+function renderAll(){renderFloorTabs();renderSidebar();renderEntry();renderStats();}
+
+window.onload=function(){
+  addFloorDirect('Ground Floor');
+  setupCanvasEvents();setupDragDrop();renderDosimetryGrid();
+  setInterval(function(){try{saveCurrentEntry();localStorage.setItem('ns_as',JSON.stringify({floors:floors.map(function(f){return Object.assign({},f,{planImage:null});}),dosimetryData:dosimetryData,floorIdCounter:floorIdCounter,pointIdCounter:pointIdCounter}));}catch(e){}},30000);
+};
+
+function addFloor(){
+  floorModalMode='add';
+  document.getElementById('floorModalTitle').textContent='Add Floor';
+  document.getElementById('floorNameInput').value='';
+  document.getElementById('floorModal').classList.remove('hidden');
+  setTimeout(function(){document.getElementById('floorNameInput').focus();},50);
+}
+function addFloorDirect(name){
+  snapshot('before add floor');
+  var id=gfid();
+  floors.push({id:id,name:name,planImage:null,points:[]});
+  renderFloorTabs();switchFloor(id);
+}
+function openRenameFloor(){
+  if(activeView!=='floor'||!currentFloorId)return;
+  floorModalMode='rename';
+  document.getElementById('floorModalTitle').textContent='Rename Floor';
+  document.getElementById('floorNameInput').value=gcf().name;
+  document.getElementById('floorModal').classList.remove('hidden');
+  setTimeout(function(){document.getElementById('floorNameInput').focus();},50);
+}
+function closeFloorModal(){document.getElementById('floorModal').classList.add('hidden');}
+function confirmFloor(){
+  var name=document.getElementById('floorNameInput').value.trim();if(!name)return;
+  if(floorModalMode==='add')addFloorDirect(name);
+  else{snapshot('before rename floor');gcf().name=name;renderFloorTabs();}
+  closeFloorModal();
+}
+document.getElementById('floorNameInput').addEventListener('keydown',function(e){if(e.key==='Enter')confirmFloor();if(e.key==='Escape')closeFloorModal();});
+
+function deleteFloor(){
+  if(activeView!=='floor'){showToast('Switch to a floor tab first',true);return;}
+  if(floors.length<=1){showToast('Cannot delete the only floor',true);return;}
+  if(!confirm('Delete "'+gcf().name+'" and all its points?'))return;
+  snapshot('before delete floor');
+  floors=floors.filter(function(f){return f.id!==currentFloorId;});
+  currentFloorId=null;currentPointId=null;
+  renderFloorTabs();switchFloor(floors[0].id);
+}
+
+function switchFloor(fid){
+  saveCurrentEntry();activeView='floor';currentFloorId=fid;currentPointId=null;
+  document.getElementById('formPanel').style.display='flex';
+  document.getElementById('planPanel').style.display='flex';
+  document.getElementById('summaryPanel').classList.remove('visible');
+  document.getElementById('dosimetryPanel').classList.remove('visible');
+  renderAll();loadFloorPlan();
+}
+function showSummary(){
+  saveCurrentEntry();activeView='summary';currentPointId=null;
+  document.getElementById('formPanel').style.display='none';
+  document.getElementById('planPanel').style.display='none';
+  document.getElementById('summaryPanel').classList.add('visible');
+  document.getElementById('dosimetryPanel').classList.remove('visible');
+  renderFloorTabs();renderSummary();
+}
+function showDosimetry(){
+  saveCurrentEntry();activeView='dosimetry';currentPointId=null;
+  document.getElementById('formPanel').style.display='none';
+  document.getElementById('planPanel').style.display='none';
+  document.getElementById('summaryPanel').classList.remove('visible');
+  document.getElementById('dosimetryPanel').classList.add('visible');
+  renderFloorTabs();renderDosimetryGrid();
+}
+
+function renderFloorTabs(){
+  var bar=document.getElementById('floorTabsBar');
+  Array.from(bar.querySelectorAll('.floor-tab')).forEach(function(t){t.remove();});
+  var addBtn=bar.querySelector('.add-floor-btn');
+  floors.forEach(function(f){
+    var btn=document.createElement('button');
+    btn.className='floor-tab'+(activeView==='floor'&&f.id===currentFloorId?' active':'');
+    btn.textContent=f.name;btn.onclick=function(){switchFloor(f.id);};
+    bar.insertBefore(btn,addBtn);
+  });
+  var sumBtn=document.createElement('button');
+  sumBtn.className='floor-tab special-tab'+(activeView==='summary'?' active':'');
+  sumBtn.textContent='Summary';sumBtn.onclick=showSummary;bar.insertBefore(sumBtn,addBtn);
+  var doseBtn=document.createElement('button');
+  doseBtn.className='floor-tab special-tab'+(activeView==='dosimetry'?' active':'');
+  doseBtn.textContent='Dosimetry';doseBtn.onclick=showDosimetry;bar.insertBefore(doseBtn,addBtn);
+}
+
+function addPoint(){
+  var floor=gcf();if(!floor)return;
+  snapshot('before add point');saveCurrentEntry();
+  var pid=gpid(floor.id);
+  floor.points.push({id:pid,db:'',peak:'',location:'',notes:'',pinX:null,pinY:null,timestamp:new Date().toISOString()});
+  currentPointId=pid;renderSidebar();renderEntry();renderStats();drawPlan();
+  setTimeout(function(){document.getElementById('inputDb').focus();},50);
+}
+function selectPoint(pid){saveCurrentEntry();currentPointId=pid;renderSidebar();renderEntry();drawPlan();}
+function saveCurrentEntry(){
+  if(!currentPointId)return;var floor=gcf();if(!floor)return;
+  var pt=floor.points.find(function(p){return p.id===currentPointId;});if(!pt)return;
+  pt.db=document.getElementById('inputDb').value;
+  pt.peak=document.getElementById('inputPeak').value;
+  pt.location=document.getElementById('inputLocation').value;
+  pt.notes=document.getElementById('inputNotes').value;
+}
+function confirmDeletePoint(){
+  if(!currentPointId)return;
+  var pt=gcf().points.find(function(p){return p.id===currentPointId;});
+  document.getElementById('deletePointLabel').textContent='P'+String(pt.id).padStart(3,'0');
+  document.getElementById('deleteModal').classList.remove('hidden');
+}
+function closeDeleteModal(){document.getElementById('deleteModal').classList.add('hidden');}
+function deletePoint(){
+  closeDeleteModal();if(!currentPointId)return;
+  snapshot('delete point');
+  var floor=gcf();var idx=floor.points.findIndex(function(p){return p.id===currentPointId;});
+  floor.points.splice(idx,1);
+  currentPointId=floor.points.length>0?floor.points[Math.min(idx,floor.points.length-1)].id:null;
+  renderSidebar();renderEntry();renderStats();drawPlan();
+}
+function saveAndNext(){
+  var dbv=document.getElementById('inputDb').value,pkv=document.getElementById('inputPeak').value;
+  document.getElementById('inputDb').classList.toggle('field-error',dbv==='');
+  document.getElementById('inputPeak').classList.toggle('field-error',pkv==='');
+  if(dbv===''||pkv===''){showToast('dB and Peak are required',true);return;}
+  saveCurrentEntry();
+  var floor=gcf();var idx=floor.points.findIndex(function(p){return p.id===currentPointId;});
+  if(idx<floor.points.length-1){currentPointId=floor.points[idx+1].id;}
+  else{snapshot('before add point');var pid=gpid(floor.id);floor.points.push({id:pid,db:'',peak:'',location:'',notes:'',pinX:null,pinY:null,timestamp:new Date().toISOString()});currentPointId=pid;showToast('New point added');}
+  renderSidebar();renderEntry();renderStats();drawPlan();
+  setTimeout(function(){document.getElementById('inputDb').focus();},50);
+}
+function saveAndPrev(){
+  saveCurrentEntry();var floor=gcf();var idx=floor.points.findIndex(function(p){return p.id===currentPointId;});
+  if(idx>0){currentPointId=floor.points[idx-1].id;renderSidebar();renderEntry();drawPlan();}
+}
+
+function renderSidebar(){
+  var floor=gcf();var list=document.getElementById('pointList');var badge=document.getElementById('pointCountBadge');
+  if(!floor){list.innerHTML='';badge.textContent='0';return;}
+  badge.textContent=floor.points.length;
+  list.innerHTML=floor.points.map(function(pt){
+    var isActive=pt.id===currentPointId,isComplete=pt.db!==''&&pt.peak!=='',hasPin=pt.pinX!==null;
+    var pid='P'+String(pt.id).padStart(3,'0');
+    return '<div class="point-item '+(isActive?'active':'')+'" onclick="selectPoint('+pt.id+')">'
+      +'<span class="point-id">'+pid+'</span>'
+      +'<div class="point-meta"><div class="point-db">'+(pt.db!==''?pt.db+' dB':'--')+'</div>'
+      +'<div class="point-loc">'+(pt.location||pt.notes||'No description')+'</div></div>'
+      +'<div class="point-dots">'+(hasPin?'<div class="dot-pin"></div>':'')+(isComplete?'<div class="dot-ok"></div>':'<div class="dot-warn"></div>')+'</div></div>';
+  }).join('');
+  var active=list.querySelector('.active');if(active)active.scrollIntoView({block:'nearest'});
+}
+function renderEntry(){
+  var floor=gcf();var card=document.getElementById('entryCard');var empty=document.getElementById('emptyState');var pinHint=document.getElementById('pinHint');
+  if(!currentPointId||!floor){card.classList.add('hidden');empty.classList.remove('hidden');pinHint.classList.add('hidden');return;}
+  var pt=floor.points.find(function(p){return p.id===currentPointId;});
+  if(!pt){card.classList.add('hidden');empty.classList.remove('hidden');return;}
+  card.classList.remove('hidden');empty.classList.add('hidden');
+  document.getElementById('entryPointLabel').textContent='P'+String(pt.id).padStart(3,'0');
+  if(pt.timestamp){var d=new Date(pt.timestamp);document.getElementById('entryTimestamp').textContent=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+' - '+d.toLocaleDateString();}
+  document.getElementById('inputDb').value=pt.db;
+  document.getElementById('inputPeak').value=pt.peak;
+  document.getElementById('inputLocation').value=pt.location;
+  document.getElementById('inputNotes').value=pt.notes||'';
+  document.getElementById('inputDb').classList.remove('field-error');
+  document.getElementById('inputPeak').classList.remove('field-error');
+  if(floor.planImage&&pt.pinX===null)pinHint.classList.remove('hidden');else pinHint.classList.add('hidden');
+}
+function renderStats(){
+  var floor=gcf();if(!floor)return;var pts=floor.points;
+  document.getElementById('statTotal').textContent=pts.length;
+  var complete=pts.filter(function(p){return p.db!==''&&p.peak!=='';});
+  document.getElementById('statComplete').textContent=complete.length;
+  var dbs=complete.map(function(p){return parseFloat(p.db);});
+  var peaks=complete.map(function(p){return parseFloat(p.peak);});
+  document.getElementById('statMaxDb').textContent=dbs.length?Math.max.apply(null,dbs).toFixed(1):'--';
+  document.getElementById('statMaxPeak').textContent=peaks.length?Math.max.apply(null,peaks).toFixed(1):'--';
+  var inc=pts.filter(function(p){return p.db===''||p.peak==='';});
+  var banner=document.getElementById('incompleteBanner');
+  if(inc.length>0){banner.classList.remove('hidden');document.getElementById('incompleteBannerText').textContent=inc.length+' point'+(inc.length>1?'s':'')+' missing dB or Peak values';}
+  else banner.classList.add('hidden');
+}
+
+function renderSummary(){
+  var proj=document.getElementById('metaProject').value||'Noise Survey';
+  var site=document.getElementById('metaSite').value,surv=document.getElementById('metaSurveyor').value;
+  var date=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
+  document.getElementById('printTitle').textContent=proj;
+  document.getElementById('printMeta').innerHTML=[site?'<span><strong>Site:</strong> '+site+'</span>':'',surv?'<span><strong>Surveyor:</strong> '+surv+'</span>':'','<span><strong>Date:</strong> '+date+'</span>'].filter(Boolean).join('');
+  document.getElementById('summarySubtitle').textContent=[site,surv,date].filter(Boolean).join(' - ')||date;
+  document.getElementById('summaryGrid').innerHTML=floors.map(function(floor){
+    var pts=floor.points,complete=pts.filter(function(p){return p.db!==''&&p.peak!=='';});
+    var inc=pts.filter(function(p){return p.db===''||p.peak==='';});
+    var dbs=complete.map(function(p){return parseFloat(p.db);});
+    var peaks=complete.map(function(p){return parseFloat(p.peak);});
+    var avg=function(arr){return arr.length?(arr.reduce(function(a,b){return a+b;},0)/arr.length).toFixed(1):'--';};
+    var pct=pts.length>0?Math.round((complete.length/pts.length)*100):0;
+    return '<div class="summary-card"><div class="summary-card-title">'+floor.name+'<span style="font-size:11px;color:var(--text-dim);font-family:DM Mono,monospace;">'+complete.length+'/'+pts.length+'</span></div>'
+      +'<div class="summary-row"><span class="summary-row-label">Points</span><span class="summary-row-value">'+pts.length+'</span></div>'
+      +'<div class="summary-row"><span class="summary-row-label">Completed</span><span class="summary-row-value">'+complete.length+'</span></div>'
+      +'<div class="summary-row"><span class="summary-row-label">Min dB</span><span class="summary-row-value">'+(dbs.length?Math.min.apply(null,dbs).toFixed(1):'--')+'</span></div>'
+      +'<div class="summary-row"><span class="summary-row-label">Max dB</span><span class="summary-row-value">'+(dbs.length?Math.max.apply(null,dbs).toFixed(1):'--')+'</span></div>'
+      +'<div class="summary-row"><span class="summary-row-label">Avg dB</span><span class="summary-row-value">'+avg(dbs)+'</span></div>'
+      +'<div class="summary-row"><span class="summary-row-label">Max Peak</span><span class="summary-row-value">'+(peaks.length?Math.max.apply(null,peaks).toFixed(1):'--')+'</span></div>'
+      +'<div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:'+pct+'%"></div></div>'
+      +'<div style="font-size:11px;color:var(--text-dim);margin-top:5px;">'+pct+'% complete</div>'
+      +(inc.length>0?'<div class="incomplete-list">Missing: '+inc.map(function(p){return '<span class="incomplete-tag">P'+String(p.id).padStart(3,'0')+'</span>';}).join('')+'</div>':'')
+      +'</div>';
+  }).join('');
+}
+
+// DOSIMETRY
+function getDoseLevel(v){if(v===''||isNaN(parseFloat(v)))return'empty';var n=parseFloat(v);if(n>=87)return'elv';if(n>=85)return'uaev';if(n>=80)return'laev';return'below';}
+function getDoseLabel(level){return{empty:'No data',below:'Below LAEV',laev:'Above LAEV 80',uaev:'Above UAEV 85',elv:'Above ELV 87'}[level];}
+
+function renderDosimetryGrid(){
+  var grid=document.getElementById('dosimetryGrid');
+  grid.innerHTML=dosimetryData.map(function(w,i){
+    var level=getDoseLevel(w.laeqd);
+    var filled=w.name||w.laeqd;
+    var statusClass=filled?(level==='empty'?'partial':'complete'):'';
+    return '<div class="dose-card" id="doseCard'+i+'">'
+      +'<div class="dose-card-header"><span class="dose-card-num">Worker '+w.slot+'</span><div class="dose-status '+statusClass+'"></div></div>'
+      +'<div class="dose-form">'
+      +'<div class="span2"><label>Full Name</label><input type="text" placeholder="e.g. Jane Smith" value="'+esc(w.name)+'" oninput="updateDose('+i+',\'name\',this.value)"></div>'
+      +'<div class="span2"><label>Job Title / Role</label><input type="text" placeholder="e.g. Machine Operator" value="'+esc(w.title)+'" oninput="updateDose('+i+',\'title\',this.value)"></div>'
+      +'<div><label>Hours Worked</label><input type="number" placeholder="8" step="0.5" min="0" max="24" value="'+esc(w.hoursWork)+'" oninput="updateDose('+i+',\'hoursWork\',this.value)"></div>'
+      +'<div><label>LEP,d dB(A)</label><input type="number" placeholder="82.0" step="0.1" value="'+esc(w.laeqd)+'" oninput="updateDose('+i+',\'laeqd\',this.value)"></div>'
+      +'<div><label>LC,peak dB(C)</label><input type="number" placeholder="130.0" step="0.1" value="'+esc(w.lcpeak)+'" oninput="updateDose('+i+',\'lcpeak\',this.value)"></div>'
+      +'<div><label>HP Type</label><select onchange="updateDose('+i+',\'hpType\',this.value)">'+HP_TYPES.map(function(t){return'<option value="'+t+'"'+(w.hpType===t?' selected':'')+'>'+t+'</option>';}).join('')+'</select></div>'
+      +'<div><label>HP SNR / Rating</label><input type="text" placeholder="e.g. 28 dB SNR" value="'+esc(w.hpRating)+'" oninput="updateDose('+i+',\'hpRating\',this.value)"></div>'
+      +'<div class="span2"><label>Notes</label><input type="text" placeholder="e.g. Intermittent exposure, sensitive" value="'+esc(w.notes)+'" oninput="updateDose('+i+',\'notes\',this.value)"></div>'
+      +'</div>'
+      +'<div class="dose-result-bar" id="drb'+i+'"><span class="dose-result">'+(w.laeqd!==''?'LEP,d: '+parseFloat(w.laeqd).toFixed(1)+' dB(A)':'')+'</span><span class="dose-badge '+level+'">'+getDoseLabel(level)+'</span></div>'
+      +'</div>';
+  }).join('');
+  updateDoseSummary();
+}
+function esc(v){return String(v||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+function updateDose(i,field,value){
+  dosimetryData[i][field]=value;
+  var level=getDoseLevel(dosimetryData[i].laeqd);
+  var rb=document.getElementById('drb'+i);
+  if(rb)rb.innerHTML='<span class="dose-result">'+(dosimetryData[i].laeqd!==''?'LEP,d: '+parseFloat(dosimetryData[i].laeqd).toFixed(1)+' dB(A)':'')+'</span><span class="dose-badge '+level+'">'+getDoseLabel(level)+'</span>';
+  var filled=dosimetryData[i].name||dosimetryData[i].laeqd;
+  var statusClass=filled?(level==='empty'?'partial':'complete'):'';
+  var card=document.getElementById('doseCard'+i);
+  if(card){var dot=card.querySelector('.dose-status');dot.className='dose-status '+(statusClass||'');}
+  updateDoseSummary();
+}
+function updateDoseSummary(){
+  var rec=dosimetryData.filter(function(w){return w.laeqd!=='';}).length;
+  var laev=dosimetryData.filter(function(w){return w.laeqd!==''&&parseFloat(w.laeqd)>=80;}).length;
+  var uaev=dosimetryData.filter(function(w){return w.laeqd!==''&&parseFloat(w.laeqd)>=85;}).length;
+  document.getElementById('doseStatRecorded').textContent=rec;
+  document.getElementById('doseStatLAEV').textContent=laev;
+  document.getElementById('doseStatUAEV').textContent=uaev;
+}
+function clearAllDosimetry(){
+  if(!confirm('Clear all dosimetry data for all 10 workers?'))return;
+  snapshot('before clear dosimetry');
+  dosimetryData=Array.from({length:10},function(_,i){return{slot:i+1,name:'',title:'',hoursWork:'',laeqd:'',lcpeak:'',hpType:'',hpRating:'',notes:''};});
+  renderDosimetryGrid();showToast('Dosimetry data cleared');
+}
+function exportDosimetryCSV(){
+  var proj=document.getElementById('metaProject').value,site=document.getElementById('metaSite').value,surv=document.getElementById('metaSurveyor').value;
+  var rows=[];
+  if(proj)rows.push(['"Project: '+proj+'"']);if(site)rows.push(['"Site: '+site+'"']);if(surv)rows.push(['"Surveyor: '+surv+'"']);
+  rows.push(['"Export date: '+new Date().toLocaleDateString('en-GB')+'"']);rows.push([]);
+  rows.push(['Worker Slot','Full Name','Job Title','Hours Worked','LEP,d dB(A)','LC,peak dB(C)','Exposure Level','HP Type','HP Rating','Notes']);
+  dosimetryData.forEach(function(w){
+    rows.push([w.slot,'"'+(w.name||'').replace(/"/g,'""')+'"','"'+(w.title||'').replace(/"/g,'""')+'"',w.hoursWork,w.laeqd,w.lcpeak,getDoseLabel(getDoseLevel(w.laeqd)),'"'+(w.hpType||'')+'"','"'+(w.hpRating||'').replace(/"/g,'""')+'"','"'+(w.notes||'').replace(/"/g,'""')+'"']);
+  });
+  var csv=rows.map(function(r){return Array.isArray(r)?r.join(','):'';}).join('\n');
+  var blob=new Blob([csv],{type:'text/csv'});var url=URL.createObjectURL(blob);var a=document.createElement('a');
+  var name=(proj||site||'dosimetry').replace(/[^a-z0-9]/gi,'_').toLowerCase();
+  a.href=url;a.download=name+'-dosimetry-'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(url);
+  showToast('Dosimetry CSV exported');
+}
+
+// FLOOR PLAN
+function loadFloorPlan(){
+  var floor=gcf();var canvas=document.getElementById('planCanvas');var dropZone=document.getElementById('planDropZone');
+  var zc=document.getElementById('zoomControls');var legend=document.getElementById('planLegend');planImg=null;
+  if(!floor||!floor.planImage){canvas.style.display='none';dropZone.style.display='flex';zc.style.display='none';legend.style.display='none';document.getElementById('planToolbarLabel').textContent='Floor Plan';return;}
+  var img=new Image();
+  img.onload=function(){planImg=img;canvas.style.display='block';dropZone.style.display='none';zc.style.display='flex';legend.style.display='flex';resetView();document.getElementById('planToolbarLabel').textContent=gcf().name;renderEntry();};
+  img.src=floor.planImage;
+}
+function loadPlan(e){
+  var file=e.target.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(ev){snapshot('before import floor plan');gcf().planImage=ev.target.result;loadFloorPlan();showToast('Floor plan loaded');};
+  reader.readAsDataURL(file);e.target.value='';
+}
+function clearPlan(){
+  if(!gcf()||!gcf().planImage)return;
+  if(!confirm('Remove floor plan? Pins will be kept.'))return;
+  snapshot('before remove floor plan');gcf().planImage=null;loadFloorPlan();
+}
+function setupDragDrop(){
+  var wrapper=document.getElementById('planWrapper');
+  wrapper.addEventListener('dragover',function(e){e.preventDefault();});
+  wrapper.addEventListener('drop',function(e){
+    e.preventDefault();var file=e.dataTransfer.files[0];
+    if(!file||!file.type.startsWith('image/')){showToast('Please drop an image file',true);return;}
+    var reader=new FileReader();
+    reader.onload=function(ev){snapshot('before import plan');gcf().planImage=ev.target.result;loadFloorPlan();showToast('Floor plan loaded');};
+    reader.readAsDataURL(file);
+  });
+}
+function resizeCanvas(){var c=document.getElementById('planCanvas'),w=document.getElementById('planWrapper');c.width=w.clientWidth;c.height=w.clientHeight;}
+function resetView(){if(!planImg)return;resizeCanvas();var c=document.getElementById('planCanvas');viewScale=Math.min(c.width/planImg.width,c.height/planImg.height)*0.92;viewOffsetX=(c.width-planImg.width*viewScale)/2;viewOffsetY=(c.height-planImg.height*viewScale)/2;drawPlan();}
+function zoom(f){var c=document.getElementById('planCanvas'),cx=c.width/2,cy=c.height/2;viewOffsetX=cx-(cx-viewOffsetX)*f;viewOffsetY=cy-(cy-viewOffsetY)*f;viewScale*=f;drawPlan();}
+function drawPlan(){
+  var canvas=document.getElementById('planCanvas');if(!canvas||canvas.style.display==='none')return;
+  resizeCanvas();var ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);
+  if(planImg)ctx.drawImage(planImg,viewOffsetX,viewOffsetY,planImg.width*viewScale,planImg.height*viewScale);
+  var floor=gcf();if(!floor)return;
+  floor.points.forEach(function(pt){
+    if(pt.pinX===null||pt.pinY===null)return;
+    var sx=pt.pinX*viewScale+viewOffsetX,sy=pt.pinY*viewScale+viewOffsetY;
+    var isActive=pt.id===currentPointId,isComplete=pt.db!==''&&pt.peak!=='',r=isActive?12:9;
+    ctx.shadowColor=isActive?'rgba(0,102,204,0.5)':'rgba(0,0,0,0.2)';ctx.shadowBlur=isActive?14:5;
+    ctx.beginPath();ctx.arc(sx,sy,r,0,Math.PI*2);
+    ctx.fillStyle=isActive?'#0066cc':(isComplete?'#2e7d32':'#e67e00');
+    ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=isActive?2.5:2;ctx.stroke();ctx.shadowBlur=0;
+    ctx.font='bold '+(isActive?9:8)+'px DM Mono,monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillStyle='#fff';ctx.fillText('P'+String(pt.id).padStart(3,'0'),sx,sy);
+    if(pt.db!==''){
+      ctx.font='10px DM Sans,sans-serif';ctx.textAlign='center';
+      var label=pt.db+' dB',tw=ctx.measureText(label).width;
+      ctx.fillStyle='rgba(255,255,255,0.93)';ctx.beginPath();
+      if(ctx.roundRect)ctx.roundRect(sx-tw/2-4,sy-r-16,tw+8,14,4);else ctx.rect(sx-tw/2-4,sy-r-16,tw+8,14);
+      ctx.fill();ctx.fillStyle=isActive?'#0055aa':'#1a2332';ctx.fillText(label,sx,sy-r-9);
+    }
+  });
+}
+function setupCanvasEvents(){
+  var canvas=document.getElementById('planCanvas');
+  canvas.addEventListener('click',function(e){
+    if(mode!=='pin')return;
+    var rect=canvas.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;
+    var floor=gcf();if(!floor)return;
+    for(var i=floor.points.length-1;i>=0;i--){
+      var pt=floor.points[i];if(pt.pinX===null)continue;
+      var sx=pt.pinX*viewScale+viewOffsetX,sy=pt.pinY*viewScale+viewOffsetY;
+      if(Math.sqrt((mx-sx)*(mx-sx)+(my-sy)*(my-sy))<13){selectPoint(pt.id);return;}
+    }
+    if(!currentPointId){showToast('Select or create a point first',true);return;}
+    var imgX=(mx-viewOffsetX)/viewScale,imgY=(my-viewOffsetY)/viewScale;
+    var pt2=floor.points.find(function(p){return p.id===currentPointId;});
+    if(pt2){pt2.pinX=imgX;pt2.pinY=imgY;drawPlan();renderSidebar();renderEntry();}
+  });
+  canvas.addEventListener('mousedown',function(e){if(mode!=='pan')return;isPanning=true;panStart={x:e.clientX,y:e.clientY};panOrigin={x:viewOffsetX,y:viewOffsetY};canvas.style.cursor='grabbing';});
+  window.addEventListener('mousemove',function(e){if(!isPanning)return;viewOffsetX=panOrigin.x+(e.clientX-panStart.x);viewOffsetY=panOrigin.y+(e.clientY-panStart.y);drawPlan();});
+  window.addEventListener('mouseup',function(){if(isPanning){isPanning=false;document.getElementById('planCanvas').style.cursor=mode==='pan'?'grab':'crosshair';}});
+  canvas.addEventListener('wheel',function(e){e.preventDefault();var f=e.deltaY<0?1.1:0.9;var rect=canvas.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;viewOffsetX=mx-(mx-viewOffsetX)*f;viewOffsetY=my-(my-viewOffsetY)*f;viewScale*=f;drawPlan();},{passive:false});
+  window.addEventListener('resize',function(){if(planImg)drawPlan();});
+}
+function setMode(m){mode=m;document.getElementById('planCanvas').style.cursor=m==='pan'?'grab':'crosshair';document.getElementById('modePinBtn').classList.toggle('active',m==='pin');document.getElementById('modePanBtn').classList.toggle('active',m==='pan');}
+
+// SAVE / LOAD
+function saveSession(){
+  saveCurrentEntry();
+  var proj=document.getElementById('metaProject').value,site=document.getElementById('metaSite').value,surv=document.getElementById('metaSurveyor').value;
+  var data={version:3,meta:{project:proj,site:site,surveyor:surv,savedAt:new Date().toISOString()},floors:floors,floorIdCounter:floorIdCounter,pointIdCounter:pointIdCounter,dosimetryData:dosimetryData};
+  var blob=new Blob([JSON.stringify(data)],{type:'application/json'});var url=URL.createObjectURL(blob);var a=document.createElement('a');
+  var name=(proj||site||'noise-survey').replace(/[^a-z0-9]/gi,'_').toLowerCase();
+  a.href=url;a.download=name+'-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(url);showToast('Session saved');
+}
+function loadSession(e){
+  var file=e.target.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      var data=JSON.parse(ev.target.result);if(!data.floors)throw new Error('Invalid file');
+      snapshot('before load session');
+      floors=data.floors;floorIdCounter=data.floorIdCounter||floors.length;pointIdCounter=data.pointIdCounter||{};
+      if(data.dosimetryData)dosimetryData=data.dosimetryData;
+      if(data.meta){document.getElementById('metaProject').value=data.meta.project||'';document.getElementById('metaSite').value=data.meta.site||'';document.getElementById('metaSurveyor').value=data.meta.surveyor||'';}
+      currentFloorId=floors[0]?floors[0].id:null;currentPointId=null;
+      renderAll();loadFloorPlan();if(activeView==='dosimetry')renderDosimetryGrid();
+      showToast('Session loaded');
+    }catch(err){showToast('Could not load: '+err.message,true);}
+  };
+  reader.readAsText(file);e.target.value='';
+}
+
+// EXPORT CSV
+function exportCSV(){
+  saveCurrentEntry();
+  var ti=floors.reduce(function(a,f){return a+f.points.filter(function(p){return p.db===''||p.peak==='';}).length;},0);
+  if(ti>0&&!confirm(ti+' point'+(ti>1?'s are':' is')+' missing dB or Peak values. Export anyway?'))return;
+  var proj=document.getElementById('metaProject').value,site=document.getElementById('metaSite').value,surv=document.getElementById('metaSurveyor').value;
+  var rows=[];
+  if(proj)rows.push(['"Project: '+proj+'"']);if(site)rows.push(['"Site: '+site+'"']);if(surv)rows.push(['"Surveyor: '+surv+'"']);
+  rows.push(['"Export date: '+new Date().toLocaleDateString('en-GB')+'"']);rows.push([]);
+  rows.push(['Floor','Point ID','dB Level','Peak dB','Location Description','Notes','Timestamp','Pin X','Pin Y']);
+  floors.forEach(function(floor){floor.points.forEach(function(pt){rows.push(['"'+floor.name+'"','P'+String(pt.id).padStart(3,'0'),pt.db,pt.peak,'"'+pt.location.replace(/"/g,'""')+'"','"'+(pt.notes||'').replace(/"/g,'""')+'"',pt.timestamp?new Date(pt.timestamp).toLocaleString('en-GB'):'',pt.pinX!==null?pt.pinX.toFixed(1):'',pt.pinY!==null?pt.pinY.toFixed(1):'']);});});
+  var csv=rows.map(function(r){return Array.isArray(r)?r.join(','):'';}).join('\n');
+  var blob=new Blob([csv],{type:'text/csv'});var url=URL.createObjectURL(blob);var a=document.createElement('a');
+  var name=(proj||site||'noise-survey').replace(/[^a-z0-9]/gi,'_').toLowerCase();
+  a.href=url;a.download=name+'-'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(url);showToast('CSV exported');
+}
+
+function printSummary(){saveCurrentEntry();renderSummary();showSummary();document.getElementById('printHeader').style.display='block';setTimeout(function(){window.print();document.getElementById('printHeader').style.display='none';},200);}
+
+function showToast(msg,isError){var t=document.getElementById('toast');t.textContent=msg;t.classList.toggle('error',!!isError);t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
+
+document.addEventListener('keydown',function(e){
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT')return;
+  if((e.ctrlKey||e.metaKey)&&e.key==='z'){e.preventDefault();undo();return;}
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveSession();return;}
+  if(e.key==='n'||e.key==='N')addPoint();
+  if(e.key==='p'||e.key==='P')setMode('pin');
+  if(e.key==='h'||e.key==='H')setMode('pan');
+  if(e.key==='r'||e.key==='R')resetView();
+  if(e.key==='ArrowRight')saveAndNext();
+  if(e.key==='ArrowLeft')saveAndPrev();
+});
+</script>
+</body>
+</html>
