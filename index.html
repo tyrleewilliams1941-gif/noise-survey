@@ -85,10 +85,12 @@
   #planCanvas{position:absolute;top:0;left:0;display:none;touch-action:none;}
   .zoom-controls{position:absolute;bottom:12px;right:12px;display:flex;flex-direction:column;gap:4px;z-index:10;}
   .zoom-btn{width:36px;height:36px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text-mid);font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
-  .legend{position:absolute;bottom:12px;left:12px;display:flex;flex-direction:column;gap:4px;background:rgba(255,255,255,.92);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:11px;color:var(--text-dim);}
-  .legend-item{display:flex;align-items:center;gap:6px;}
-  .legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .legend{position:absolute;bottom:12px;left:12px;display:flex;flex-direction:column;gap:5px;background:rgba(255,255,255,.97);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:11px;color:var(--text-dim);box-shadow:0 2px 10px rgba(0,0,0,.12);min-width:130px;}
+  .legend-item{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:500;}
+  .legend-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;border:2px solid rgba(0,0,0,.15);}
 
+  .export-plan-btn{position:absolute;top:10px;right:10px;background:var(--surface);border:1.5px solid var(--accent);color:var(--accent);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:"DM Sans",sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.12);z-index:10;}
+  .export-plan-btn:active{background:var(--accent-dim);}
   /* FULL PANELS (summary, dosimetry) */
   .full-panel{flex:1;overflow-y:auto;padding:16px;display:none;flex-direction:column;gap:16px;-webkit-overflow-scrolling:touch;}
   .full-panel::-webkit-scrollbar{width:6px;}
@@ -380,6 +382,8 @@
         <span class="plan-toolbar-label" id="planToolbarLabel">Floor Plan</span>
         <button class="plan-mode-btn active" id="modePinBtn" onclick="setMode('pin')">&#128205; Pin</button>
         <button class="plan-mode-btn" id="modePanBtn" onclick="setMode('pan')">&#9995; Pan</button>
+        <button class="plan-mode-btn" id="modeHatchBtn" onclick="setMode('hatch')">&#9641; Zone</button>
+        <button class="btn-danger btn-sm" id="clearLastHatchBtn" onclick="clearLastHatch()" style="display:none">&#8617; Undo Zone</button>
         <label class="label-btn">&#128444; Plan<input type="file" id="planFileInput" accept="image/*" style="display:none" onchange="loadPlan(event)"></label>
         <button class="btn-danger btn-sm" onclick="clearPlan()">Remove</button>
       </div>
@@ -390,16 +394,27 @@
           <div style="font-size:13px;">Tap to browse or drag &amp; drop</div>
         </div>
         <canvas id="planCanvas"></canvas>
+        <div id="hatchHint" style="display:none;position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(215,48,39,0.9);color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;pointer-events:none;white-space:nowrap;font-family:DM Sans,sans-serif;">
+          Tap to draw zone &bull; Double-tap to close &bull; <span id="hatchPointCount">0</span> pts
+        </div>
         <div class="zoom-controls" id="zoomControls" style="display:none">
           <button class="zoom-btn" onclick="zoom(1.25)" style="font-size:20px;">+</button>
           <button class="zoom-btn" onclick="zoom(0.8)" style="font-size:20px;">&#8722;</button>
           <button class="zoom-btn" onclick="resetView()" style="font-size:11px;">Reset</button>
         </div>
         <div class="legend" id="planLegend" style="display:none">
-          <div class="legend-item"><div class="legend-dot" style="background:#0066cc"></div>Selected</div>
-          <div class="legend-item"><div class="legend-dot" style="background:#2e7d32"></div>Complete</div>
-          <div class="legend-item"><div class="legend-dot" style="background:#e67e00"></div>Incomplete</div>
+          <div style="font-size:9px;font-family:DM Mono,monospace;text-transform:uppercase;letter-spacing:.08em;color:var(--text-dim);margin-bottom:3px;font-weight:600;">dB Level</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#1a9641"></div>&lt; 75 dB</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#a6d96a"></div>75 – 80 dB</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#fdae61"></div>80 – 85 dB</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#d73027"></div>85 – 90 dB</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#7b2d8b"></div>&gt; 90 dB</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#aaaaaa"></div>No data</div>
+          <div class="legend-item"><div style="width:12px;height:12px;border-radius:2px;background:rgba(215,48,39,0.18);border:1.5px solid #d73027;flex-shrink:0;"></div>Hatch Zone</div>
+          <div style="border-top:1px solid #e0e0e0;margin:4px 0;"></div>
+          <div class="legend-item"><div style="width:12px;height:12px;border-radius:50%;background:#fff;border:3px solid #0066cc;flex-shrink:0;"></div>Selected</div>
         </div>
+        <button class="export-plan-btn" id="exportPlanBtn" onclick="exportPlanPDF()" style="display:none">&#8681; Export PDF</button>
       </div>
     </div>
 
@@ -486,6 +501,7 @@ var floors=[],currentFloorId=null,currentPointId=null,activeView='formView',acti
 var floorModalMode='add',floorIdCounter=0,pointIdCounter={},undoStack=[];
 var dosimetryData=Array.from({length:10},function(_,i){return{slot:i+1,name:'',title:'',hoursWork:'',laeqd:'',lcpeak:'',hpType:'',hpRating:'',notes:''};});
 var planImg=null,viewOffsetX=0,viewOffsetY=0,viewScale=1,mode='pin';
+var hatchPoints=[],isDrawingHatch=false,hatchPreview=null;
 var isPanning=false,panStart={x:0,y:0},panOrigin={x:0,y:0};
 var isMobile=function(){return window.innerWidth<768;};
 var HP_TYPES=['None','Earplugs (disposable)','Earplugs (reusable)','Earmuffs','Custom moulded','Earmuffs + earplugs'];
@@ -587,7 +603,7 @@ function addFloor(){
 }
 function addFloorDirect(name){
   snapshot('add floor');var id=gfid();
-  floors.push({id:id,name:name,planImage:null,points:[]});
+  floors.push({id:id,name:name,planImage:null,points:[],hatchZones:[]});
   renderFloorTabs();switchFloor(id);
 }
 function openRenameFloor(){
@@ -734,7 +750,7 @@ function renderSidebars(){
       +'<span class="point-id">'+pid+'</span>'
       +'<div class="point-meta"><div class="point-db">'+(pt.db!==''?pt.db+' dB':'--')+'</div>'
       +'<div class="point-loc">'+(pt.location||pt.notes||'No description')+'</div></div>'
-      +'<div class="point-dots">'+(hasPin?'<div class="dot-pin"></div>':'')+(isComplete?'<div class="dot-ok"></div>':'<div class="dot-warn"></div>')+'</div></div>';
+      +'<div class="point-dots">'+(hasPin?'<div class="dot-pin"></div>':'')+'<div style="width:10px;height:10px;border-radius:50%;background:'+dbColour(pt.db)+';border:1.5px solid rgba(0,0,0,.12);flex-shrink:0;"></div>'+'</div></div>';
   }).join(''):'';
   document.getElementById('pointListDesktop').innerHTML=html;
   document.getElementById('pointListMobile').innerHTML=html;
@@ -866,10 +882,10 @@ function exportDosimetryCSV(){
 // ── FLOOR PLAN ──
 function loadFloorPlan(){
   var floor=gcf();var canvas=document.getElementById('planCanvas');var dropZone=document.getElementById('planDropZone');
-  var zc=document.getElementById('zoomControls');var legend=document.getElementById('planLegend');planImg=null;
-  if(!floor||!floor.planImage){canvas.style.display='none';dropZone.style.display='flex';zc.style.display='none';legend.style.display='none';document.getElementById('planToolbarLabel').textContent='Floor Plan';return;}
+  var zc=document.getElementById('zoomControls');var legend=document.getElementById('planLegend');var epb=document.getElementById('exportPlanBtn');planImg=null;
+  if(!floor||!floor.planImage){canvas.style.display='none';dropZone.style.display='flex';zc.style.display='none';legend.style.display='none';if(epb)epb.style.display='none';document.getElementById('planToolbarLabel').textContent='Floor Plan';return;}
   var img=new Image();
-  img.onload=function(){planImg=img;canvas.style.display='block';dropZone.style.display='none';zc.style.display='flex';legend.style.display='flex';resetView();document.getElementById('planToolbarLabel').textContent=gcf()?gcf().name:'Floor Plan';renderEntry();};
+  img.onload=function(){planImg=img;canvas.style.display='block';dropZone.style.display='none';zc.style.display='flex';legend.style.display='flex';if(epb)epb.style.display='block';resetView();document.getElementById('planToolbarLabel').textContent=gcf()?gcf().name:'Floor Plan';renderEntry();};
   img.src=floor.planImage;
 }
 function loadPlan(e){
@@ -897,29 +913,72 @@ function setupDragDrop(){
 function resizeCanvas(){var c=document.getElementById('planCanvas'),w=document.getElementById('planWrapper');c.width=w.clientWidth;c.height=w.clientHeight;}
 function resetView(){if(!planImg)return;resizeCanvas();var c=document.getElementById('planCanvas');viewScale=Math.min(c.width/planImg.width,c.height/planImg.height)*0.92;viewOffsetX=(c.width-planImg.width*viewScale)/2;viewOffsetY=(c.height-planImg.height*viewScale)/2;drawPlan();}
 function zoom(f){var c=document.getElementById('planCanvas'),cx=c.width/2,cy=c.height/2;viewOffsetX=cx-(cx-viewOffsetX)*f;viewOffsetY=cy-(cy-viewOffsetY)*f;viewScale*=f;drawPlan();}
+function dbColour(db){
+  if(db===''||isNaN(parseFloat(db)))return'#aaaaaa';
+  var v=parseFloat(db);
+  if(v<75)return'#1a9641';
+  if(v<80)return'#a6d96a';
+  if(v<85)return'#fdae61';
+  if(v<90)return'#d73027';
+  return'#7b2d8b';
+}
+function drawPoints(ctx,floor,scale,ox,oy,activeId){
+  floor.points.forEach(function(pt){
+    if(pt.pinX===null||pt.pinY===null)return;
+    var sx=pt.pinX*scale+ox,sy=pt.pinY*scale+oy;
+    var isActive=pt.id===activeId;
+    var r=isActive?18:14;
+    var fill=dbColour(pt.db);
+    // Drop shadow
+    ctx.shadowColor='rgba(0,0,0,0.35)';ctx.shadowBlur=isActive?18:8;ctx.shadowOffsetY=2;
+    // Outer ring for selected
+    if(isActive){
+      ctx.beginPath();ctx.arc(sx,sy,r+4,0,Math.PI*2);
+      ctx.fillStyle='rgba(0,102,204,0.25)';ctx.fill();
+    }
+    // Main circle
+    ctx.beginPath();ctx.arc(sx,sy,r,0,Math.PI*2);
+    ctx.fillStyle=fill;ctx.fill();
+    ctx.strokeStyle=isActive?'#0066cc':'rgba(255,255,255,0.9)';
+    ctx.lineWidth=isActive?3:2.5;ctx.stroke();
+    ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+    // Point ID label inside circle
+    ctx.font='bold '+(isActive?11:10)+'px DM Mono,monospace';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    // Dark text on light colours, white on dark
+    var bright=fill==='#a6d96a'||fill==='#fdae61'||fill==='#aaaaaa';
+    ctx.fillStyle=bright?'#1a2332':'#ffffff';
+    ctx.fillText('P'+String(pt.id).padStart(3,'0'),sx,sy);
+    // dB callout bubble above pin
+    if(pt.db!==''){
+      var label=parseFloat(pt.db).toFixed(1)+' dB';
+      ctx.font='bold 12px DM Sans,sans-serif';
+      var tw=ctx.measureText(label).width;
+      var bw=tw+14,bh=20,bx=sx-bw/2,by=sy-r-bh-6;
+      // Bubble background in same colour
+      ctx.beginPath();
+      if(ctx.roundRect)ctx.roundRect(bx,by,bw,bh,6);else ctx.rect(bx,by,bw,bh);
+      ctx.fillStyle=fill;ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,0.6)';ctx.lineWidth=1.5;ctx.stroke();
+      // Pointer triangle
+      ctx.beginPath();ctx.moveTo(sx-6,by+bh);ctx.lineTo(sx+6,by+bh);ctx.lineTo(sx,by+bh+6);
+      ctx.fillStyle=fill;ctx.fill();
+      // Label text
+      ctx.fillStyle=bright?'#1a2332':'#ffffff';
+      ctx.font='bold 12px DM Sans,sans-serif';
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(label,sx,by+bh/2);
+    }
+  });
+}
 function drawPlan(){
   var canvas=document.getElementById('planCanvas');if(!canvas||canvas.style.display==='none')return;
   resizeCanvas();var ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);
   if(planImg)ctx.drawImage(planImg,viewOffsetX,viewOffsetY,planImg.width*viewScale,planImg.height*viewScale);
   var floor=gcf();if(!floor)return;
-  floor.points.forEach(function(pt){
-    if(pt.pinX===null||pt.pinY===null)return;
-    var sx=pt.pinX*viewScale+viewOffsetX,sy=pt.pinY*viewScale+viewOffsetY;
-    var isActive=pt.id===currentPointId,isComplete=pt.db!==''&&pt.peak!=='',r=isActive?14:10;
-    ctx.shadowColor=isActive?'rgba(0,102,204,0.5)':'rgba(0,0,0,0.25)';ctx.shadowBlur=isActive?16:6;
-    ctx.beginPath();ctx.arc(sx,sy,r,0,Math.PI*2);
-    ctx.fillStyle=isActive?'#0066cc':(isComplete?'#2e7d32':'#e67e00');
-    ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=isActive?2.5:2;ctx.stroke();ctx.shadowBlur=0;
-    ctx.font='bold '+(isActive?9:8)+'px DM Mono,monospace';ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillStyle='#fff';ctx.fillText('P'+String(pt.id).padStart(3,'0'),sx,sy);
-    if(pt.db!==''){
-      ctx.font='11px DM Sans,sans-serif';ctx.textAlign='center';
-      var label=pt.db+' dB',tw=ctx.measureText(label).width;
-      ctx.fillStyle='rgba(255,255,255,0.93)';ctx.beginPath();
-      if(ctx.roundRect)ctx.roundRect(sx-tw/2-4,sy-r-18,tw+8,15,4);else ctx.rect(sx-tw/2-4,sy-r-18,tw+8,15);
-      ctx.fill();ctx.fillStyle=isActive?'#0055aa':'#1a2332';ctx.fillText(label,sx,sy-r-10);
-    }
-  });
+  drawHatchZones(ctx,floor,viewScale,viewOffsetX,viewOffsetY);
+  if(mode==='hatch')drawHatchInProgress(ctx,viewScale,viewOffsetX,viewOffsetY);
+  drawPoints(ctx,floor,viewScale,viewOffsetX,viewOffsetY,currentPointId);
 }
 function setupCanvasEvents(){
   var canvas=document.getElementById('planCanvas');
@@ -974,6 +1033,15 @@ function setupCanvasEvents(){
           var imgX=(mx-viewOffsetX)/viewScale,imgY=(my-viewOffsetY)/viewScale;
           var pt2=floor.points.find(function(p){return p.id===currentPointId;});
           if(pt2){pt2.pinX=imgX;pt2.pinY=imgY;drawPlan();renderSidebars();renderEntry();showToast('Pin placed');}
+        } else if(mode==='hatch'){
+          var imgX2=(mx-viewOffsetX)/viewScale,imgY2=(my-viewOffsetY)/viewScale;
+          // Check if tapping near first point to close polygon
+          if(hatchPoints.length>=3){
+            var fp=hatchPoints[0];
+            var fsx=fp.x*viewScale+viewOffsetX,fsy=fp.y*viewScale+viewOffsetY;
+            if(Math.sqrt((mx-fsx)*(mx-fsx)+(my-fsy)*(my-fsy))<20){closeHatch();return;}
+          }
+          addHatchPoint(imgX2,imgY2);
         }
       }
     }
@@ -981,9 +1049,24 @@ function setupCanvasEvents(){
   },{passive:false});
 
   // Mouse events (desktop)
+  canvas.addEventListener('dblclick',function(e){
+    if(mode==='hatch'){e.preventDefault();if(hatchPoints.length>=3)closeHatch();}
+  });
   canvas.addEventListener('click',function(e){
-    if(mode!=='pin')return;
+    if(e.detail>1)return; // ignore double-click second click
     var rect=canvas.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;
+    if(mode==='hatch'){
+      var floor=gcf();if(!floor)return;
+      var imgX=(mx-viewOffsetX)/viewScale,imgY=(my-viewOffsetY)/viewScale;
+      if(hatchPoints.length>=3){
+        var fp=hatchPoints[0];
+        var fsx=fp.x*viewScale+viewOffsetX,fsy=fp.y*viewScale+viewOffsetY;
+        if(Math.sqrt((mx-fsx)*(mx-fsx)+(my-fsy)*(my-fsy))<16){closeHatch();return;}
+      }
+      addHatchPoint(imgX,imgY);
+      return;
+    }
+    if(mode!=='pin')return;
     var floor=gcf();if(!floor)return;
     for(var i=floor.points.length-1;i>=0;i--){
       var pt=floor.points[i];if(pt.pinX===null)continue;
@@ -996,12 +1079,137 @@ function setupCanvasEvents(){
     if(pt2){pt2.pinX=imgX;pt2.pinY=imgY;drawPlan();renderSidebars();renderEntry();}
   });
   canvas.addEventListener('mousedown',function(e){if(mode!=='pan')return;isPanning=true;panStart={x:e.clientX,y:e.clientY};panOrigin={x:viewOffsetX,y:viewOffsetY};canvas.style.cursor='grabbing';});
-  window.addEventListener('mousemove',function(e){if(!isPanning)return;viewOffsetX=panOrigin.x+(e.clientX-panStart.x);viewOffsetY=panOrigin.y+(e.clientY-panStart.y);drawPlan();});
+  window.addEventListener('mousemove',function(e){
+    if(mode==='hatch'&&hatchPoints.length>0){
+      var canvas2=document.getElementById('planCanvas');
+      if(canvas2){
+        var rect2=canvas2.getBoundingClientRect();
+        var mx2=e.clientX-rect2.left,my2=e.clientY-rect2.top;
+        hatchPreview={x:(mx2-viewOffsetX)/viewScale,y:(my2-viewOffsetY)/viewScale};
+        drawPlan();
+      }
+    }
+    if(!isPanning)return;viewOffsetX=panOrigin.x+(e.clientX-panStart.x);viewOffsetY=panOrigin.y+(e.clientY-panStart.y);drawPlan();});
   window.addEventListener('mouseup',function(){if(isPanning){isPanning=false;document.getElementById('planCanvas').style.cursor=mode==='pan'?'grab':'crosshair';}});
   canvas.addEventListener('wheel',function(e){e.preventDefault();var f=e.deltaY<0?1.1:0.9;var rect=canvas.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;viewOffsetX=mx-(mx-viewOffsetX)*f;viewOffsetY=my-(my-viewOffsetY)*f;viewScale*=f;drawPlan();},{passive:false});
   window.addEventListener('resize',function(){if(planImg)drawPlan();});
 }
-function setMode(m){mode=m;document.getElementById('planCanvas').style.cursor=m==='pan'?'grab':'crosshair';document.getElementById('modePinBtn').classList.toggle('active',m==='pin');document.getElementById('modePanBtn').classList.toggle('active',m==='pan');}
+function setMode(m){
+  // Cancel any in-progress hatch when switching away
+  if(mode==='hatch'&&m!=='hatch'){cancelHatch();}
+  mode=m;
+  var cursors={pin:'crosshair',pan:'grab',hatch:'cell'};
+  document.getElementById('planCanvas').style.cursor=cursors[m]||'crosshair';
+  document.getElementById('modePinBtn').classList.toggle('active',m==='pin');
+  document.getElementById('modePanBtn').classList.toggle('active',m==='pan');
+  document.getElementById('modeHatchBtn').classList.toggle('active',m==='hatch');
+  document.getElementById('hatchHint').style.display=m==='hatch'?'block':'none';
+  var clb=document.getElementById('clearLastHatchBtn');
+  if(clb){var floor=gcf();clb.style.display=(floor&&floor.hatchZones&&floor.hatchZones.length>0)?'block':'none';}
+}
+
+// ── HATCH ZONES ──
+function addHatchPoint(imgX,imgY){
+  var floor=gcf();if(!floor)return;
+  hatchPoints.push({x:imgX,y:imgY});
+  document.getElementById('hatchPointCount').textContent=hatchPoints.length;
+  drawPlan();
+}
+function closeHatch(){
+  var floor=gcf();if(!floor)return;
+  if(hatchPoints.length<3){showToast('Need at least 3 points',true);cancelHatch();return;}
+  if(!floor.hatchZones)floor.hatchZones=[];
+  floor.hatchZones.push(hatchPoints.slice());
+  hatchPoints=[];isDrawingHatch=false;
+  document.getElementById('hatchPointCount').textContent='0';
+  var clb=document.getElementById('clearLastHatchBtn');if(clb)clb.style.display='block';
+  drawPlan();
+  showToast('Zone added');
+}
+function cancelHatch(){
+  hatchPoints=[];isDrawingHatch=false;
+  document.getElementById('hatchPointCount').textContent='0';
+  drawPlan();
+}
+function clearLastHatch(){
+  var floor=gcf();if(!floor||!floor.hatchZones||!floor.hatchZones.length)return;
+  snapshot('before remove hatch zone');
+  floor.hatchZones.pop();
+  var clb=document.getElementById('clearLastHatchBtn');
+  if(clb)clb.style.display=floor.hatchZones.length?'block':'none';
+  drawPlan();
+  showToast('Zone removed');
+}
+function drawHatchZones(ctx,floor,scale,ox,oy){
+  if(!floor.hatchZones||!floor.hatchZones.length)return;
+  var spacing=12,angle=Math.PI/4;
+  floor.hatchZones.forEach(function(zone){
+    if(!zone||zone.length<2)return;
+    // Convert image coords to screen coords
+    var pts=zone.map(function(p){return{x:p.x*scale+ox,y:p.y*scale+oy};});
+    // Clip to polygon
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x,pts[0].y);
+    for(var i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);
+    ctx.closePath();
+    // Fill with semi-transparent red
+    ctx.fillStyle='rgba(215,48,39,0.13)';ctx.fill();
+    // Hatching lines
+    ctx.clip();
+    ctx.strokeStyle='rgba(215,48,39,0.55)';ctx.lineWidth=1.5;
+    // Find bounding box of polygon
+    var minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+    pts.forEach(function(p){minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);});
+    var diag=Math.sqrt((maxX-minX)*(maxX-minX)+(maxY-minY)*(maxY-minY))+spacing*4;
+    var cx=(minX+maxX)/2,cy=(minY+maxY)/2;
+    ctx.translate(cx,cy);ctx.rotate(angle);
+    var start=-diag;
+    ctx.beginPath();
+    for(var d=start;d<diag;d+=spacing){
+      ctx.moveTo(d,-diag);ctx.lineTo(d,diag);
+    }
+    ctx.stroke();
+    ctx.restore();
+    // Draw polygon outline
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x,pts[0].y);
+    for(var j=1;j<pts.length;j++)ctx.lineTo(pts[j].x,pts[j].y);
+    ctx.closePath();
+    ctx.strokeStyle='rgba(215,48,39,0.85)';ctx.lineWidth=2;
+    ctx.setLineDash([6,3]);ctx.stroke();ctx.setLineDash([]);
+    ctx.restore();
+  });
+}
+function drawHatchInProgress(ctx,scale,ox,oy){
+  if(!hatchPoints.length)return;
+  var pts=hatchPoints.map(function(p){return{x:p.x*scale+ox,y:p.y*scale+oy};});
+  ctx.save();
+  ctx.strokeStyle='rgba(215,48,39,0.9)';ctx.lineWidth=2;ctx.setLineDash([5,4]);
+  ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);
+  for(var i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);
+  ctx.stroke();ctx.setLineDash([]);
+  // Draw vertex dots
+  pts.forEach(function(p,idx){
+    ctx.beginPath();ctx.arc(p.x,p.y,idx===0?8:5,0,Math.PI*2);
+    ctx.fillStyle=idx===0?'rgba(215,48,39,0.9)':'rgba(215,48,39,0.7)';ctx.fill();
+    ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
+  });
+  // Preview line to cursor
+  if(hatchPreview&&pts.length>0){
+    var px=hatchPreview.x*scale+ox,py=hatchPreview.y*scale+oy;
+    ctx.strokeStyle='rgba(215,48,39,0.45)';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
+    ctx.beginPath();ctx.moveTo(pts[pts.length-1].x,pts[pts.length-1].y);ctx.lineTo(px,py);ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  // Close hint circle on first point
+  if(pts.length>=3){
+    ctx.beginPath();ctx.arc(pts[0].x,pts[0].y,14,0,Math.PI*2);
+    ctx.strokeStyle='rgba(215,48,39,0.4)';ctx.lineWidth=1.5;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
+  }
+  ctx.restore();
+}
 
 // ── SAVE / LOAD ──
 function saveSession(){
@@ -1051,6 +1259,52 @@ function exportCSV(){
   var blob=new Blob([csv],{type:'text/csv'});var url=URL.createObjectURL(blob);var a=document.createElement('a');
   var name=(proj||site||'noise-survey').replace(/[^a-z0-9]/gi,'_').toLowerCase();
   a.href=url;a.download=name+'-'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(url);showToast('CSV exported');
+}
+
+// ── EXPORT PLAN PDF ──
+function exportPlanPDF(){
+  if(!planImg){showToast('No floor plan loaded',true);return;}
+  var floor=gcf();if(!floor){showToast('No floor selected',true);return;}
+  showToast('Generating PDF...');
+  // Draw to an offscreen canvas at 2x resolution for sharpness
+  var scale=2;
+  var oc=document.createElement('canvas');
+  oc.width=planImg.width*scale;oc.height=planImg.height*scale;
+  var ctx=oc.getContext('2d');
+  // White background
+  ctx.fillStyle='#ffffff';ctx.fillRect(0,0,oc.width,oc.height);
+  // Draw plan image at full res
+  ctx.drawImage(planImg,0,0,oc.width,oc.height);
+  // Draw all points at image coordinates (no viewport transform, use full image coords)
+  drawHatchZones(ctx,floor,scale,0,0);
+  drawPoints(ctx,floor,scale,0,0,null);
+  // Add header bar at bottom
+  var proj=document.getElementById('metaProject').value;
+  var site=document.getElementById('metaSite').value;
+  var surv=document.getElementById('metaSurveyor').value;
+  var hh=52*scale;
+  var totalH=oc.height+hh;
+  var fc=document.createElement('canvas');fc.width=oc.width;fc.height=totalH;
+  var fctx=fc.getContext('2d');
+  fctx.fillStyle='#ffffff';fctx.fillRect(0,0,fc.width,fc.height);
+  fctx.drawImage(oc,0,0);
+  // Footer bar
+  fctx.fillStyle='#1a2332';fctx.fillRect(0,oc.height,fc.width,hh);
+  fctx.fillStyle='#ffffff';
+  var fontSize=13*scale;
+  fctx.font='600 '+fontSize+'px DM Sans,sans-serif';
+  fctx.textBaseline='middle';fctx.textAlign='left';
+  var texts=[floor.name,proj,site,surv,new Date().toLocaleDateString('en-GB')].filter(Boolean);
+  fctx.fillText(texts.join('  |  '),16*scale,oc.height+hh/2);
+  // Convert to blob and trigger download
+  fc.toBlob(function(blob){
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    var fname=((proj||site||'noise-survey')+'-'+floor.name).replace(/[^a-z0-9]/gi,'_').toLowerCase();
+    a.href=url;a.download=fname+'-plan.png';
+    a.click();URL.revokeObjectURL(url);
+    showToast('Floor plan exported');
+  },'image/png');
 }
 
 // ── PRINT ──
