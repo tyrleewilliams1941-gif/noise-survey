@@ -2,179 +2,273 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Noise Survey</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
+  *{box-sizing:border-box;margin:0;padding:0;}
+  :root{
     --bg:#f0f4f8;--surface:#fff;--surface2:#e8edf3;--border:#c8d0db;
     --accent:#0066cc;--accent-dim:rgba(0,102,204,0.12);--accent-dim2:rgba(0,102,204,0.06);
     --text:#1a2332;--text-dim:#5a6a7e;--text-mid:#3d5068;
     --danger:#d93025;--warn:#e67e00;--success:#2e7d32;--radius:10px;
+    --header-h:52px;--tabs-h:40px;--mob-nav-h:56px;
   }
-  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
-  header{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px;}
+
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
+
+  /* ── HEADER ── */
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 12px;height:var(--header-h);display:flex;align-items:center;gap:10px;flex-shrink:0;}
   .app-title{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:600;white-space:nowrap;}
-  .header-meta{display:flex;gap:6px;flex:1;max-width:600px;}
-  .header-meta input{background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;padding:5px 9px;outline:none;flex:1;transition:border-color .15s;}
-  .header-meta input:focus{border-color:var(--accent);}
-  .header-meta input::placeholder{color:var(--text-dim);}
-  .header-actions{display:flex;gap:6px;align-items:center;flex-shrink:0;}
-  .floor-tabs-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;gap:2px;overflow-x:auto;flex-shrink:0;}
-  .floor-tabs-bar::-webkit-scrollbar{height:3px;}
-  .floor-tabs-bar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
-  .floor-tab{padding:8px 15px;font-size:13px;font-weight:500;color:var(--text-dim);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s;font-family:'DM Sans',sans-serif;}
+  .header-right{display:flex;gap:6px;align-items:center;margin-left:auto;flex-shrink:0;}
+  .header-meta-row{display:none;} /* hidden on mobile, shown desktop */
+
+  /* ── TABS ── */
+  .floor-tabs-bar{background:var(--surface);border-bottom:1px solid var(--border);height:var(--tabs-h);display:flex;align-items:center;gap:0;overflow-x:auto;flex-shrink:0;-webkit-overflow-scrolling:touch;}
+  .floor-tabs-bar::-webkit-scrollbar{display:none;}
+  .floor-tab{padding:0 14px;height:var(--tabs-h);font-size:13px;font-weight:500;color:var(--text-dim);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s;font-family:'DM Sans',sans-serif;flex-shrink:0;}
   .floor-tab:hover{color:var(--text-mid);}
   .floor-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
   .floor-tab.special-tab{font-style:italic;}
-  .add-floor-btn{padding:5px 11px;font-size:17px;color:var(--text-dim);background:none;border:none;cursor:pointer;transition:color .15s;line-height:1;}
-  .add-floor-btn:hover{color:var(--accent);}
+  .add-floor-btn{padding:0 12px;height:var(--tabs-h);font-size:20px;color:var(--text-dim);background:none;border:none;cursor:pointer;flex-shrink:0;line-height:1;}
+
+  /* ── MAIN LAYOUT ── */
   .main{display:flex;flex:1;overflow:hidden;}
-  .sidebar{width:195px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
+
+  /* SIDEBAR — hidden on mobile */
+  .sidebar{width:200px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
   .sidebar-header{padding:10px 13px 8px;font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
   .point-count{background:var(--accent-dim);color:var(--accent);padding:2px 6px;border-radius:20px;font-size:10px;font-weight:600;}
   .point-list{flex:1;overflow-y:auto;padding:4px 0;}
   .point-list::-webkit-scrollbar{width:4px;}
   .point-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
-  .point-item{padding:6px 13px;cursor:pointer;display:flex;align-items:center;gap:7px;border-left:2px solid transparent;transition:background .12s,border-color .12s;}
-  .point-item:hover{background:var(--accent-dim2);}
+  .point-item{padding:10px 13px;cursor:pointer;display:flex;align-items:center;gap:7px;border-left:2px solid transparent;transition:background .12s,border-color .12s;}
+  .point-item:hover,.point-item:active{background:var(--accent-dim2);}
   .point-item.active{background:var(--accent-dim);border-left-color:var(--accent);}
   .point-id{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);min-width:32px;font-weight:600;}
   .point-meta{flex:1;min-width:0;}
   .point-db{font-size:12px;font-weight:500;color:var(--text);}
-  .point-loc{font-size:11px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:105px;}
+  .point-loc{font-size:11px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px;}
   .point-dots{display:flex;gap:3px;flex-shrink:0;}
-  .dot-pin{width:5px;height:5px;border-radius:50%;background:var(--accent);opacity:.7;}
-  .dot-warn{width:5px;height:5px;border-radius:50%;background:var(--warn);}
-  .dot-ok{width:5px;height:5px;border-radius:50%;background:var(--success);}
-  .content{flex:1;display:flex;overflow:hidden;}
-  .form-panel{width:390px;flex-shrink:0;display:flex;flex-direction:column;padding:14px;gap:12px;overflow-y:auto;border-right:1px solid var(--border);}
-  .form-panel::-webkit-scrollbar{width:4px;}
-  .form-panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
-  .stats-bar{display:flex;gap:8px;}
-  .stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:9px 11px;flex:1;}
-  .stat-label{font-size:9px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin-bottom:2px;}
-  .stat-value{font-size:16px;font-weight:600;color:var(--accent);font-family:'DM Mono',monospace;}
-  .entry-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;width:100%;}
-  .entry-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;}
-  .point-label{font-family:'DM Mono',monospace;font-size:19px;color:var(--accent);font-weight:600;}
-  .point-timestamp{font-size:10px;color:var(--text-dim);font-family:'DM Mono',monospace;}
-  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
-  .form-group{display:flex;flex-direction:column;gap:4px;}
-  .form-group.full{grid-column:1/-1;}
-  label{font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);}
-  label.required::after{content:' *';color:var(--danger);}
-  input[type="number"],input[type="text"],textarea,select{background:#f8fafc;border:1.5px solid var(--border);border-radius:7px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:8px 10px;transition:border-color .15s,box-shadow .15s;outline:none;width:100%;}
-  input.field-error{border-color:var(--danger);background:#fff5f5;}
-  input[type="number"]:focus,input[type="text"]:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);}
-  textarea{resize:vertical;min-height:56px;font-size:13px;}
-  .form-actions{display:flex;gap:7px;margin-top:10px;}
-  button{font-family:'DM Sans',sans-serif;cursor:pointer;border:none;border-radius:7px;font-size:13px;font-weight:500;transition:all .15s;}
-  .btn-primary{background:var(--accent);color:#fff;padding:8px 16px;flex:1;}
-  .btn-primary:hover{filter:brightness(1.1);}
-  .btn-secondary{background:var(--surface2);color:var(--text-mid);padding:8px 12px;border:1px solid var(--border);}
-  .btn-secondary:hover{border-color:var(--text-mid);color:var(--text);}
-  .btn-danger{background:rgba(217,48,37,.08);color:var(--danger);padding:8px 11px;border:1px solid rgba(217,48,37,.2);}
-  .btn-danger:hover{background:rgba(217,48,37,.16);}
-  .btn-export{background:var(--surface);color:var(--accent);padding:6px 11px;border:1.5px solid var(--accent);font-size:12px;font-weight:600;}
-  .btn-export:hover{background:var(--accent-dim);}
-  .btn-sm{padding:5px 10px;font-size:12px;}
-  .btn-icon{padding:5px 8px;font-size:14px;background:var(--surface2);border:1px solid var(--border);color:var(--text-mid);}
-  .btn-icon:hover{border-color:var(--accent);color:var(--accent);}
-  .label-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;font-size:12px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text-mid);font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;transition:all .15s;}
-  .label-btn:hover{border-color:var(--text-mid);}
-  .pin-hint{font-size:11px;color:var(--text-dim);padding:7px 10px;background:var(--accent-dim2);border:1px solid var(--border);border-radius:7px;display:flex;align-items:center;gap:7px;}
-  .pin-hint .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex-shrink:0;animation:pulse 1.5s infinite;}
-  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.5)}}
-  .incomplete-banner{background:#fff8e1;border:1px solid #ffe082;border-radius:7px;padding:8px 12px;font-size:12px;color:#7c5a00;display:flex;align-items:center;gap:8px;}
-  .undo-bar{background:#e8f0fe;border:1px solid #adc4f5;border-radius:7px;padding:7px 12px;font-size:12px;color:#1a5cb8;display:flex;align-items:center;justify-content:space-between;gap:10px;}
-  .undo-bar button{background:none;border:none;color:#1a5cb8;font-weight:600;font-size:12px;text-decoration:underline;cursor:pointer;padding:0;}
-  .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-dim);gap:8px;font-size:13px;flex:1;padding:40px;text-align:center;}
-  .empty-icon{font-size:30px;opacity:.4;}
-  .plan-panel{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;}
-  .plan-toolbar{padding:7px 13px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px;flex-shrink:0;background:var(--surface);flex-wrap:wrap;}
-  .plan-toolbar-label{font-size:10px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);flex:1;min-width:80px;}
-  .plan-mode-btn{padding:4px 10px;font-size:12px;font-weight:500;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text-mid);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
+  .dot-pin{width:6px;height:6px;border-radius:50%;background:var(--accent);opacity:.7;}
+  .dot-warn{width:6px;height:6px;border-radius:50%;background:var(--warn);}
+  .dot-ok{width:6px;height:6px;border-radius:50%;background:var(--success);}
+  .sidebar-add-btn{padding:10px 13px;border-top:1px solid var(--border);}
+
+  /* CONTENT AREA */
+  .content{flex:1;display:flex;overflow:hidden;position:relative;}
+
+  /* MOBILE VIEWS — stack as pages */
+  .view{flex:1;display:flex;flex-direction:column;overflow:hidden;position:absolute;inset:0;background:var(--bg);transition:transform .25s ease;transform:translateX(100%);}
+  .view.active{transform:translateX(0);}
+  /* on desktop views are static */
+
+  /* FORM VIEW */
+  .form-view{overflow-y:auto;padding:14px;gap:12px;display:flex;flex-direction:column;}
+  .form-view::-webkit-scrollbar{width:4px;}
+
+  /* POINTS LIST VIEW (mobile only) */
+  .points-view{display:flex;flex-direction:column;overflow:hidden;}
+  .points-view-header{padding:12px 14px 10px;font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:var(--surface);flex-shrink:0;}
+  .points-view-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+  .points-view .point-item{padding:14px 16px;}
+
+  /* PLAN VIEW */
+  .plan-view{display:flex;flex-direction:column;overflow:hidden;}
+  .plan-toolbar{padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px;flex-shrink:0;background:var(--surface);flex-wrap:wrap;}
+  .plan-toolbar-label{font-size:10px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);flex:1;min-width:60px;}
+  .plan-mode-btn{padding:6px 11px;font-size:12px;font-weight:500;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text-mid);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;min-height:36px;}
   .plan-mode-btn.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);}
-  .plan-mode-btn:hover:not(.active){border-color:var(--text-mid);}
   .plan-canvas-wrapper{flex:1;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;background:#e4eaf2;}
-  .plan-drop-zone{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--text-dim);font-size:13px;border:2px dashed var(--border);border-radius:14px;padding:40px;cursor:pointer;transition:border-color .2s,color .2s;text-align:center;}
-  .plan-drop-zone:hover{border-color:var(--accent);color:var(--text-mid);}
-  .plan-drop-zone .drop-icon{font-size:36px;opacity:.5;}
-  #planCanvas{position:absolute;top:0;left:0;cursor:crosshair;display:none;}
+  .plan-drop-zone{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--text-dim);font-size:14px;border:2px dashed var(--border);border-radius:14px;padding:32px 24px;cursor:pointer;text-align:center;margin:20px;}
+  .plan-drop-zone .drop-icon{font-size:40px;opacity:.5;}
+  #planCanvas{position:absolute;top:0;left:0;display:none;touch-action:none;}
   .zoom-controls{position:absolute;bottom:12px;right:12px;display:flex;flex-direction:column;gap:4px;z-index:10;}
-  .zoom-btn{width:27px;height:27px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text-mid);font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;}
-  .zoom-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .zoom-btn{width:36px;height:36px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text-mid);font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
   .legend{position:absolute;bottom:12px;left:12px;display:flex;flex-direction:column;gap:4px;background:rgba(255,255,255,.92);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:11px;color:var(--text-dim);}
   .legend-item{display:flex;align-items:center;gap:6px;}
   .legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-  /* FULL-WIDTH PANELS */
-  .full-panel{flex:1;overflow-y:auto;padding:20px;display:none;flex-direction:column;gap:16px;}
+
+  /* FULL PANELS (summary, dosimetry) */
+  .full-panel{flex:1;overflow-y:auto;padding:16px;display:none;flex-direction:column;gap:16px;-webkit-overflow-scrolling:touch;}
   .full-panel::-webkit-scrollbar{width:6px;}
-  .full-panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
   .full-panel.visible{display:flex;}
   .panel-title{font-size:18px;font-weight:600;color:var(--text);}
   .panel-subtitle{font-size:13px;color:var(--text-dim);margin-top:3px;}
+
+  /* STATS */
+  .stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:9px 10px;}
+  .stat-label{font-size:9px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;color:var(--text-dim);margin-bottom:2px;}
+  .stat-value{font-size:16px;font-weight:600;color:var(--accent);font-family:'DM Mono',monospace;}
+
+  /* ENTRY CARD */
+  .entry-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;width:100%;}
+  .entry-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .point-label{font-family:'DM Mono',monospace;font-size:20px;color:var(--accent);font-weight:600;}
+  .point-timestamp{font-size:10px;color:var(--text-dim);font-family:'DM Mono',monospace;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+  .form-group{display:flex;flex-direction:column;gap:5px;}
+  .form-group.full{grid-column:1/-1;}
+  label{font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);}
+  label.required::after{content:' *';color:var(--danger);}
+  input[type="number"],input[type="text"],textarea,select{background:#f8fafc;border:1.5px solid var(--border);border-radius:7px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:16px;padding:10px 11px;transition:border-color .15s,box-shadow .15s;outline:none;width:100%;-webkit-appearance:none;appearance:none;}
+  select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%235a6a7e' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;}
+  input.field-error{border-color:var(--danger);background:#fff5f5;}
+  input[type="number"]:focus,input[type="text"]:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);}
+  textarea{resize:vertical;min-height:60px;font-size:14px;}
+  .form-actions{display:flex;gap:8px;margin-top:12px;}
+
+  /* BUTTONS */
+  button{font-family:'DM Sans',sans-serif;cursor:pointer;border:none;border-radius:8px;font-size:14px;font-weight:500;transition:all .15s;-webkit-tap-highlight-color:transparent;}
+  .btn-primary{background:var(--accent);color:#fff;padding:12px 18px;flex:1;}
+  .btn-primary:active{filter:brightness(.9);}
+  .btn-secondary{background:var(--surface2);color:var(--text-mid);padding:10px 13px;border:1px solid var(--border);}
+  .btn-secondary:active{background:var(--border);}
+  .btn-danger{background:rgba(217,48,37,.08);color:var(--danger);padding:10px 13px;border:1px solid rgba(217,48,37,.2);}
+  .btn-danger:active{background:rgba(217,48,37,.2);}
+  .btn-export{background:var(--surface);color:var(--accent);padding:8px 13px;border:1.5px solid var(--accent);font-size:13px;font-weight:600;}
+  .btn-sm{padding:7px 11px;font-size:12px;}
+  .btn-icon{padding:7px 10px;font-size:15px;background:var(--surface2);border:1px solid var(--border);color:var(--text-mid);}
+  .label-btn{display:inline-flex;align-items:center;gap:5px;padding:8px 12px;font-size:13px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text-mid);font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;}
+
+  /* BANNERS */
+  .pin-hint{font-size:12px;color:var(--text-dim);padding:9px 12px;background:var(--accent-dim2);border:1px solid var(--border);border-radius:7px;display:flex;align-items:center;gap:8px;}
+  .pin-hint .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex-shrink:0;animation:pulse 1.5s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.5)}}
+  .incomplete-banner{background:#fff8e1;border:1px solid #ffe082;border-radius:7px;padding:9px 12px;font-size:13px;color:#7c5a00;display:flex;align-items:center;gap:8px;}
+  .undo-bar{background:#e8f0fe;border:1px solid #adc4f5;border-radius:7px;padding:9px 12px;font-size:13px;color:#1a5cb8;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .undo-bar button{background:none;border:none;color:#1a5cb8;font-weight:600;font-size:13px;text-decoration:underline;cursor:pointer;padding:0;}
+  .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-dim);gap:10px;font-size:14px;flex:1;padding:40px;text-align:center;}
+  .empty-icon{font-size:36px;opacity:.4;}
+
   /* SUMMARY */
-  .summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+  .summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;}
   .summary-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
-  .summary-card-title{font-size:13px;font-weight:600;color:var(--accent);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
-  .summary-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--surface2);font-size:13px;}
+  .summary-card-title{font-size:14px;font-weight:600;color:var(--accent);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
+  .summary-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--surface2);font-size:13px;}
   .summary-row:last-child{border-bottom:none;}
   .summary-row-label{color:var(--text-dim);}
   .summary-row-value{font-weight:600;font-family:'DM Mono',monospace;color:var(--text);}
   .progress-bar-wrap{background:var(--surface2);border-radius:4px;height:6px;overflow:hidden;margin-top:8px;}
-  .progress-bar-fill{height:100%;border-radius:4px;background:var(--accent);transition:width .4s;}
+  .progress-bar-fill{height:100%;border-radius:4px;background:var(--accent);}
   .incomplete-list{margin-top:10px;font-size:12px;display:flex;flex-wrap:wrap;gap:4px;}
   .incomplete-tag{background:#fff3e0;border:1px solid #ffcc80;border-radius:4px;padding:2px 7px;color:var(--warn);}
+
   /* DOSIMETRY */
-  .dose-ref-note{font-size:11px;color:var(--text-dim);background:var(--surface);border-radius:7px;padding:10px 14px;border:1px solid var(--border);line-height:1.7;}
+  .dose-ref-note{font-size:12px;color:var(--text-dim);background:var(--surface);border-radius:7px;padding:11px 14px;border:1px solid var(--border);line-height:1.7;}
   .dose-ref-note strong{color:var(--text-mid);}
-  .dose-summary-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;display:flex;gap:24px;flex-wrap:wrap;align-items:center;}
+  .dose-summary-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;}
   .dose-summary-stat .slabel{font-size:9px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin-bottom:2px;}
   .dose-summary-stat .svalue{font-size:17px;font-weight:600;font-family:'DM Mono',monospace;color:var(--accent);}
-  .dosimetry-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;}
-  .dose-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;transition:box-shadow .15s,border-color .15s;}
+  .dosimetry-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+  .dose-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
   .dose-card:focus-within{box-shadow:0 0 0 2px var(--accent);border-color:var(--accent);}
   .dose-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
   .dose-card-num{font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-dim);padding:3px 8px;border-radius:20px;}
-  .dose-status{width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0;transition:background .2s;}
+  .dose-status{width:9px;height:9px;border-radius:50%;background:var(--border);flex-shrink:0;}
   .dose-status.partial{background:var(--warn);}
   .dose-status.complete{background:var(--success);}
   .dose-form{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
   .dose-form .span2{grid-column:1/-1;}
   .dose-form label{font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:3px;}
-  .dose-form input,.dose-form select{background:#f8fafc;border:1.5px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 9px;outline:none;width:100%;transition:border-color .15s,box-shadow .15s;}
+  .dose-form input,.dose-form select{background:#f8fafc;border:1.5px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;padding:8px 10px;outline:none;width:100%;transition:border-color .15s;-webkit-appearance:none;}
+  .dose-form select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%235a6a7e' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:26px;}
   .dose-form input:focus,.dose-form select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);}
   .dose-form input::placeholder{color:var(--text-dim);opacity:.6;}
   .dose-result-bar{margin-top:12px;padding-top:10px;border-top:1px solid var(--surface2);display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:26px;}
   .dose-result{font-family:'DM Mono',monospace;font-size:12px;color:var(--text-dim);}
-  .dose-badge{font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700;font-family:'DM Mono',monospace;}
+  .dose-badge{font-size:10px;padding:4px 10px;border-radius:20px;font-weight:700;font-family:'DM Mono',monospace;}
   .dose-badge.empty{background:var(--surface2);color:var(--text-dim);}
   .dose-badge.below{background:#e8f5e9;color:var(--success);}
-  .dose-badge.laev{background:#fff3e0;color:var(--warn);}
-  .dose-badge.uaev{background:#fff3e0;color:var(--warn);}
+  .dose-badge.laev,.dose-badge.uaev{background:#fff3e0;color:var(--warn);}
   .dose-badge.elv{background:#ffebee;color:var(--danger);}
+
+  /* MOBILE BOTTOM NAV */
+  .mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:var(--mob-nav-h);background:var(--surface);border-top:1px solid var(--border);z-index:50;padding:0 4px;}
+  .mob-nav-inner{display:flex;height:100%;}
+  .mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:none;background:none;color:var(--text-dim);font-size:9px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;padding:6px 4px;-webkit-tap-highlight-color:transparent;border-top:2px solid transparent;}
+  .mob-nav-btn.active{color:var(--accent);border-top-color:var(--accent);}
+  .mob-nav-btn .nav-icon{font-size:20px;line-height:1;}
+
+  /* MOB: meta drawer */
+  .meta-drawer{display:none;position:fixed;top:var(--header-h);left:0;right:0;background:var(--surface);border-bottom:1px solid var(--border);padding:10px 14px;gap:8px;z-index:40;flex-direction:column;box-shadow:0 4px 12px rgba(0,0,0,.1);}
+  .meta-drawer.open{display:flex;}
+  .meta-drawer input{font-size:15px;padding:9px 11px;}
+
   /* MODALS */
-  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px);}
-  .modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;width:360px;box-shadow:0 20px 50px rgba(0,0,0,.2);}
-  .modal h3{font-size:15px;font-weight:600;margin-bottom:13px;}
-  .modal input{margin-bottom:13px;}
-  .modal-actions{display:flex;gap:8px;}
-  .modal p{font-size:13px;color:var(--text-dim);margin-bottom:16px;line-height:1.5;}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:flex-end;justify-content:center;z-index:100;backdrop-filter:blur(3px);}
+  .modal{background:var(--surface);border-radius:16px 16px 0 0;padding:24px 20px 32px;width:100%;max-width:500px;box-shadow:0 -10px 40px rgba(0,0,0,.2);}
+  .modal h3{font-size:16px;font-weight:600;margin-bottom:14px;}
+  .modal input{margin-bottom:14px;font-size:16px;padding:11px 12px;}
+  .modal-actions{display:flex;gap:10px;}
+  .modal p{font-size:14px;color:var(--text-dim);margin-bottom:18px;line-height:1.5;}
+
+  /* MISC */
   .hidden{display:none!important;}
-  .toast{position:fixed;bottom:18px;right:18px;background:var(--accent);color:#fff;padding:8px 15px;border-radius:8px;font-size:13px;font-weight:500;opacity:0;transform:translateY(8px);transition:all .25s;z-index:200;pointer-events:none;}
-  .toast.show{opacity:1;transform:translateY(0);}
+  .toast{position:fixed;bottom:calc(var(--mob-nav-h) + 10px);left:50%;transform:translateX(-50%) translateY(20px);background:var(--accent);color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;font-weight:500;opacity:0;transition:all .25s;z-index:200;pointer-events:none;white-space:nowrap;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
   .toast.error{background:var(--danger);}
   .print-header{display:none;margin-bottom:24px;}
   .print-header h1{font-size:20px;font-weight:700;}
   .print-header .print-meta{font-size:12px;color:var(--text-dim);margin-top:6px;display:flex;gap:20px;flex-wrap:wrap;}
+
+  /* ═══════ DESKTOP (>= 768px) ═══════ */
+  @media(min-width:768px){
+    body{height:100vh;}
+    .mob-nav{display:none!important;}
+    .meta-drawer{display:none!important;}
+    header{padding:0 16px;gap:12px;}
+    .header-meta-row{display:flex;gap:6px;flex:1;max-width:560px;}
+    .header-meta-row input{background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;padding:5px 9px;outline:none;flex:1;transition:border-color .15s;}
+    .header-meta-row input:focus{border-color:var(--accent);}
+    .header-meta-row input::placeholder{color:var(--text-dim);}
+    .header-right{gap:6px;}
+    .sidebar{display:flex!important;}
+    .content{position:relative;}
+    /* reset mobile view system for desktop */
+    .view{position:static;transform:none;flex:1;}
+    .view.active{transform:none;}
+    .form-view{width:390px;flex:none;border-right:1px solid var(--border);}
+    .points-view{display:none!important;}
+    .plan-view{flex:1;}
+    input[type="number"],input[type="text"],textarea,select{font-size:14px;padding:8px 10px;}
+    .dose-form input,.dose-form select{font-size:13px;padding:7px 9px;}
+    .toast{bottom:18px;}
+    .modal{border-radius:14px;max-width:360px;align-self:center;padding:24px;}
+    .modal-overlay{align-items:center;}
+    .btn-primary{padding:9px 16px;}
+    .btn-secondary{padding:7px 12px;}
+    .btn-danger{padding:7px 11px;}
+    .btn-sm{padding:5px 10px;font-size:12px;}
+  }
+
+  /* ═══════ MOBILE (< 768px) ═══════ */
+  @media(max-width:767px){
+    .sidebar{display:none!important;}
+    .mob-nav{display:block;}
+    /* push content above bottom nav */
+    .main{margin-bottom:var(--mob-nav-h);}
+    .content{position:relative;overflow:hidden;}
+    /* Each view is a slide-in page */
+    .view{position:absolute;inset:0;background:var(--bg);}
+    .view.active{transform:translateX(0);}
+    .form-view{width:100%;}
+    .header-meta-row{display:none!important;}
+    .header-right .btn-sm-text{display:none;} /* hide text labels on small buttons */
+    /* Make form inputs bigger on mobile */
+    .form-grid{grid-template-columns:1fr 1fr;}
+    .full-panel{padding:14px;}
+    .dosimetry-grid{grid-template-columns:1fr;}
+    .summary-grid{grid-template-columns:1fr;}
+    .dose-summary-bar{gap:12px;}
+  }
+
   @media print{
     body{height:auto;overflow:auto;}
-    header,.floor-tabs-bar,.sidebar,.form-panel,.plan-toolbar,.zoom-controls,.legend,.modal-overlay,.toast{display:none!important;}
-    .main,.content{display:block;overflow:visible;}
-    .plan-panel{display:none;}
+    header,.floor-tabs-bar,.sidebar,.mob-nav,.modal-overlay,.toast,.plan-toolbar,.zoom-controls,.legend{display:none!important;}
+    .main,.content{display:block;overflow:visible;margin:0;}
+    .view,.plan-view{display:none!important;}
     .full-panel.visible{display:block!important;padding:0;}
     .print-header{display:block!important;}
     @page{margin:15mm;}
@@ -182,86 +276,124 @@
 </style>
 </head>
 <body>
+
+<!-- HEADER -->
 <header>
-  <span class="app-title">&#9679; NoiseSurvey</span>
-  <div class="header-meta">
+  <span class="app-title">&#9679; Survey</span>
+  <div class="header-meta-row">
     <input type="text" id="metaProject" placeholder="Project name" maxlength="80">
     <input type="text" id="metaSite" placeholder="Site / building" maxlength="80">
     <input type="text" id="metaSurveyor" placeholder="Surveyor" maxlength="60">
   </div>
-  <div class="header-actions">
-    <button class="btn-icon" onclick="undo()" title="Undo (Ctrl+Z)">&#8617;</button>
-    <button class="btn-export" onclick="exportCSV()">Export CSV</button>
+  <div class="header-right">
+    <button class="btn-icon" onclick="toggleMetaDrawer()" title="Project info" id="metaToggleBtn">&#9432;</button>
+    <button class="btn-icon" onclick="undo()" title="Undo">&#8617;</button>
+    <button class="btn-export" onclick="exportCSV()">CSV</button>
     <button class="btn-secondary btn-sm" onclick="saveSession()">Save</button>
     <button class="btn-secondary btn-sm" onclick="document.getElementById('loadFileInput').click()">Load</button>
     <input type="file" id="loadFileInput" accept=".json" style="display:none" onchange="loadSession(event)">
-    <button class="btn-secondary btn-sm" onclick="printSummary()">Print</button>
-    <button class="btn-secondary btn-sm" onclick="openRenameFloor()">Rename Floor</button>
-    <button class="btn-danger btn-sm" onclick="deleteFloor()">Delete Floor</button>
+    <button class="btn-secondary btn-sm desktopOnly" onclick="openRenameFloor()">Rename</button>
+    <button class="btn-danger btn-sm desktopOnly" onclick="deleteFloor()">Delete Floor</button>
   </div>
 </header>
-<div class="floor-tabs-bar" id="floorTabsBar">
-  <button class="add-floor-btn" onclick="addFloor()" title="Add floor">+</button>
+
+<!-- META DRAWER (mobile only) -->
+<div class="meta-drawer" id="metaDrawer">
+  <input type="text" id="metaProjectM" placeholder="Project name" maxlength="80">
+  <input type="text" id="metaSiteM" placeholder="Site / building" maxlength="80">
+  <input type="text" id="metaSurveyorM" placeholder="Surveyor" maxlength="60">
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <button class="btn-secondary btn-sm" onclick="openRenameFloor()">Rename Floor</button>
+    <button class="btn-danger btn-sm" onclick="deleteFloor()">Delete Floor</button>
+    <button class="btn-secondary btn-sm" onclick="document.getElementById('planFileInput').click()">Import Plan</button>
+    <button class="btn-secondary btn-sm" onclick="printSummary()">Print</button>
+    <button class="btn-secondary btn-sm" onclick="toggleMetaDrawer()">Close</button>
+  </div>
 </div>
+
+<!-- FLOOR TABS -->
+<div class="floor-tabs-bar" id="floorTabsBar">
+  <button class="add-floor-btn" onclick="addFloor()">+</button>
+</div>
+
+<!-- MAIN -->
 <div class="main">
+
+  <!-- SIDEBAR (desktop only) -->
   <div class="sidebar">
     <div class="sidebar-header">Points <span class="point-count" id="pointCountBadge">0</span></div>
-    <div class="point-list" id="pointList"></div>
-    <div style="padding:9px 11px;border-top:1px solid var(--border);">
+    <div class="point-list" id="pointListDesktop"></div>
+    <div class="sidebar-add-btn">
       <button class="btn-secondary" style="width:100%;font-size:12px;" onclick="addPoint()">+ New Point</button>
     </div>
   </div>
+
   <div class="content">
-    <!-- FORM PANEL -->
-    <div class="form-panel" id="formPanel">
+
+    <!-- POINTS LIST VIEW (mobile) -->
+    <div class="view points-view" id="pointsView">
+      <div class="points-view-header">
+        Points <span class="point-count" id="pointCountMobile">0</span>
+        <button class="btn-primary btn-sm" onclick="addPoint();showView('formView')">+ New</button>
+      </div>
+      <div class="points-view-list" id="pointListMobile"></div>
+    </div>
+
+    <!-- FORM VIEW -->
+    <div class="view form-view active" id="formView">
       <div class="stats-bar">
         <div class="stat"><div class="stat-label">Points</div><div class="stat-value" id="statTotal">0</div></div>
         <div class="stat"><div class="stat-label">Done</div><div class="stat-value" id="statComplete">0</div></div>
         <div class="stat"><div class="stat-label">Max dB</div><div class="stat-value" id="statMaxDb">--</div></div>
-        <div class="stat"><div class="stat-label">Max Peak</div><div class="stat-value" id="statMaxPeak">--</div></div>
+        <div class="stat"><div class="stat-label">Peak</div><div class="stat-value" id="statMaxPeak">--</div></div>
       </div>
       <div class="incomplete-banner hidden" id="incompleteBanner">&#9888; <span id="incompleteBannerText"></span></div>
       <div class="undo-bar hidden" id="undoBar"><span id="undoMsg"></span><button onclick="undo()">Undo</button></div>
-      <div class="empty-state" id="emptyState"><div class="empty-icon">&#128203;</div><div>No point selected</div><div style="font-size:11px;">Add a point or select one from the list</div></div>
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">&#128203;</div>
+        <div>No point selected</div>
+        <button class="btn-primary" style="margin-top:8px;flex:none;padding:12px 24px;" onclick="addPoint()">+ Add First Point</button>
+      </div>
       <div class="entry-card hidden" id="entryCard">
         <div class="entry-card-header">
           <span class="point-label" id="entryPointLabel">P001</span>
           <span class="point-timestamp" id="entryTimestamp"></span>
         </div>
         <div class="form-grid">
-          <div class="form-group"><label class="required">dB Level</label><input type="number" id="inputDb" placeholder="72.4" step="0.1"></div>
-          <div class="form-group"><label class="required">Peak dB</label><input type="number" id="inputPeak" placeholder="85.2" step="0.1"></div>
-          <div class="form-group full"><label>Location Description</label><textarea id="inputLocation" placeholder="e.g. North wall, adjacent to HVAC, 1.5m height"></textarea></div>
-          <div class="form-group full"><label>Notes / Flags</label><input type="text" id="inputNotes" placeholder="e.g. High background, repeated, obstructed"></div>
+          <div class="form-group"><label class="required">dB Level</label><input type="number" id="inputDb" placeholder="72.4" step="0.1" inputmode="decimal"></div>
+          <div class="form-group"><label class="required">Peak dB</label><input type="number" id="inputPeak" placeholder="85.2" step="0.1" inputmode="decimal"></div>
+          <div class="form-group full"><label>Location</label><textarea id="inputLocation" placeholder="e.g. North wall, HVAC unit, 1.5m height" rows="2"></textarea></div>
+          <div class="form-group full"><label>Notes / Flags</label><input type="text" id="inputNotes" placeholder="e.g. High background, repeated"></div>
         </div>
-        <div class="pin-hint hidden" id="pinHint"><div class="dot"></div>Click the floor plan to place this point's pin</div>
+        <div class="pin-hint hidden" id="pinHint"><div class="dot"></div>Switch to Plan tab to place this point's pin</div>
         <div class="form-actions">
-          <button class="btn-secondary" onclick="saveAndPrev()">Prev</button>
-          <button class="btn-primary" onclick="saveAndNext()">Save and Next</button>
-          <button class="btn-danger" onclick="confirmDeletePoint()">Delete</button>
+          <button class="btn-secondary" onclick="saveAndPrev()" style="flex:none;padding:12px 14px;">&#8592;</button>
+          <button class="btn-primary" onclick="saveAndNext()">Save &amp; Next &#8594;</button>
+          <button class="btn-danger" onclick="confirmDeletePoint()" style="flex:none;padding:12px 14px;">&#128465;</button>
         </div>
       </div>
     </div>
-    <!-- FLOOR PLAN -->
-    <div class="plan-panel" id="planPanel">
+
+    <!-- PLAN VIEW -->
+    <div class="view plan-view" id="planView">
       <div class="plan-toolbar">
         <span class="plan-toolbar-label" id="planToolbarLabel">Floor Plan</span>
-        <button class="plan-mode-btn active" id="modePinBtn" onclick="setMode('pin')">Place Pins</button>
-        <button class="plan-mode-btn" id="modePanBtn" onclick="setMode('pan')">Pan</button>
-        <label class="label-btn">Import Plan<input type="file" id="planFileInput" accept="image/*" style="display:none" onchange="loadPlan(event)"></label>
-        <button class="btn-danger btn-sm" onclick="clearPlan()">Remove Plan</button>
+        <button class="plan-mode-btn active" id="modePinBtn" onclick="setMode('pin')">&#128205; Pin</button>
+        <button class="plan-mode-btn" id="modePanBtn" onclick="setMode('pan')">&#9995; Pan</button>
+        <label class="label-btn">&#128444; Plan<input type="file" id="planFileInput" accept="image/*" style="display:none" onchange="loadPlan(event)"></label>
+        <button class="btn-danger btn-sm" onclick="clearPlan()">Remove</button>
       </div>
       <div class="plan-canvas-wrapper" id="planWrapper">
         <div class="plan-drop-zone" id="planDropZone" onclick="document.getElementById('planFileInput').click()">
           <div class="drop-icon">&#128506;</div>
           <strong>Import a floor plan</strong>
-          <span>Click to browse or drag and drop an image</span>
+          <div style="font-size:13px;">Tap to browse or drag &amp; drop</div>
         </div>
         <canvas id="planCanvas"></canvas>
         <div class="zoom-controls" id="zoomControls" style="display:none">
-          <button class="zoom-btn" onclick="zoom(1.2)">+</button>
-          <button class="zoom-btn" onclick="zoom(0.8)">-</button>
-          <button class="zoom-btn" onclick="resetView()" style="font-size:10px;">Reset</button>
+          <button class="zoom-btn" onclick="zoom(1.25)" style="font-size:20px;">+</button>
+          <button class="zoom-btn" onclick="zoom(0.8)" style="font-size:20px;">&#8722;</button>
+          <button class="zoom-btn" onclick="resetView()" style="font-size:11px;">Reset</button>
         </div>
         <div class="legend" id="planLegend" style="display:none">
           <div class="legend-item"><div class="legend-dot" style="background:#0066cc"></div>Selected</div>
@@ -270,38 +402,61 @@
         </div>
       </div>
     </div>
+
     <!-- SUMMARY PANEL -->
     <div class="full-panel" id="summaryPanel">
       <div class="print-header" id="printHeader"><h1 id="printTitle">Noise Survey Report</h1><div class="print-meta" id="printMeta"></div></div>
       <div><div class="panel-title">Survey Summary</div><div class="panel-subtitle" id="summarySubtitle"></div></div>
       <div class="summary-grid" id="summaryGrid"></div>
     </div>
+
     <!-- DOSIMETRY PANEL -->
     <div class="full-panel" id="dosimetryPanel">
       <div>
         <div class="panel-title">Personal Dosimetry</div>
-        <div class="panel-subtitle">Noise exposure records for workers wearing personal noise dosimeters</div>
+        <div class="panel-subtitle">Noise exposure for workers wearing personal dosimeters</div>
       </div>
       <div class="dose-ref-note">
-        <strong>UK reference levels - Control of Noise at Work Regulations 2005:</strong><br>
-        Lower Exposure Action Value (LAEV): LEP,d 80 dB(A) &nbsp;|&nbsp;
-        Upper Exposure Action Value (UAEV): LEP,d 85 dB(A) &nbsp;|&nbsp;
-        Exposure Limit Value (ELV): LEP,d 87 dB(A)
+        <strong>UK Control of Noise at Work Regs 2005:</strong><br>
+        LAEV 80 dB(A) &nbsp;|&nbsp; UAEV 85 dB(A) &nbsp;|&nbsp; ELV 87 dB(A)
       </div>
       <div class="dose-summary-bar">
-        <div class="dose-summary-stat"><div class="slabel">Workers</div><div class="svalue" id="doseStatWorkers">10</div></div>
+        <div class="dose-summary-stat"><div class="slabel">Workers</div><div class="svalue">10</div></div>
         <div class="dose-summary-stat"><div class="slabel">Recorded</div><div class="svalue" id="doseStatRecorded">0</div></div>
-        <div class="dose-summary-stat"><div class="slabel">Above LAEV (80+)</div><div class="svalue" id="doseStatLAEV" style="color:var(--warn)">0</div></div>
-        <div class="dose-summary-stat"><div class="slabel">Above UAEV (85+)</div><div class="svalue" id="doseStatUAEV" style="color:var(--danger)">0</div></div>
-        <div style="margin-left:auto;display:flex;gap:8px;">
-          <button class="btn-export" onclick="exportDosimetryCSV()">Export Dosimetry CSV</button>
+        <div class="dose-summary-stat"><div class="slabel">Above LAEV</div><div class="svalue" id="doseStatLAEV" style="color:var(--warn)">0</div></div>
+        <div class="dose-summary-stat"><div class="slabel">Above UAEV</div><div class="svalue" id="doseStatUAEV" style="color:var(--danger)">0</div></div>
+        <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn-export" onclick="exportDosimetryCSV()">Export CSV</button>
           <button class="btn-secondary btn-sm" onclick="clearAllDosimetry()">Clear All</button>
         </div>
       </div>
       <div class="dosimetry-grid" id="dosimetryGrid"></div>
     </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mob-nav">
+  <div class="mob-nav-inner">
+    <button class="mob-nav-btn active" id="navBtnPoints" onclick="showView('pointsView')">
+      <span class="nav-icon">&#128203;</span>Points
+    </button>
+    <button class="mob-nav-btn" id="navBtnForm" onclick="showView('formView')">
+      <span class="nav-icon">&#9998;</span>Entry
+    </button>
+    <button class="mob-nav-btn" id="navBtnPlan" onclick="showView('planView')">
+      <span class="nav-icon">&#128506;</span>Plan
+    </button>
+    <button class="mob-nav-btn" id="navBtnSummary" onclick="showView('summaryView')">
+      <span class="nav-icon">&#128202;</span>Summary
+    </button>
+    <button class="mob-nav-btn" id="navBtnDose" onclick="showView('dosimetryView')">
+      <span class="nav-icon">&#128100;</span>Dose
+    </button>
   </div>
-</div>
+</nav>
+
 <!-- MODALS -->
 <div class="modal-overlay hidden" id="floorModal">
   <div class="modal">
@@ -316,25 +471,51 @@
 <div class="modal-overlay hidden" id="deleteModal">
   <div class="modal">
     <h3>Delete Point?</h3>
-    <p>This will remove <strong id="deletePointLabel"></strong> and all its data. This can be undone.</p>
+    <p>This will remove <strong id="deletePointLabel"></strong> and all its data. Can be undone.</p>
     <div class="modal-actions">
       <button class="btn-secondary" style="flex:1" onclick="closeDeleteModal()">Cancel</button>
       <button class="btn-danger" style="flex:1" onclick="deletePoint()">Delete</button>
     </div>
   </div>
 </div>
+
 <div class="toast" id="toast"></div>
+
 <script>
-var floors=[],currentFloorId=null,currentPointId=null,activeView='floor',floorModalMode='add',floorIdCounter=0,pointIdCounter={},undoStack=[];
+var floors=[],currentFloorId=null,currentPointId=null,activeView='formView',activeFloorView='floor';
+var floorModalMode='add',floorIdCounter=0,pointIdCounter={},undoStack=[];
 var dosimetryData=Array.from({length:10},function(_,i){return{slot:i+1,name:'',title:'',hoursWork:'',laeqd:'',lcpeak:'',hpType:'',hpRating:'',notes:''};});
-var planImg=null,viewOffsetX=0,viewOffsetY=0,viewScale=1,mode='pin',isPanning=false,panStart={x:0,y:0},panOrigin={x:0,y:0};
+var planImg=null,viewOffsetX=0,viewOffsetY=0,viewScale=1,mode='pin';
+var isPanning=false,panStart={x:0,y:0},panOrigin={x:0,y:0};
+var isMobile=function(){return window.innerWidth<768;};
 var HP_TYPES=['None','Earplugs (disposable)','Earplugs (reusable)','Earmuffs','Custom moulded','Earmuffs + earplugs'];
 
-function gfid(){return 'f'+(++floorIdCounter);}
-function gpid(fid){if(!pointIdCounter[fid])pointIdCounter[fid]=0;return ++pointIdCounter[fid];}
-function gf(fid){return floors.find(function(f){return f.id===fid;});}
-function gcf(){return gf(currentFloorId);}
+function gfid(){return'f'+(++floorIdCounter);}
+function gpid(fid){if(!pointIdCounter[fid])pointIdCounter[fid]=0;return++pointIdCounter[fid];}
+function gcf(){return floors.find(function(f){return f.id===currentFloorId;});}
 
+// ── SYNC META FIELDS DESKTOP <-> MOBILE ──
+function syncMeta(){
+  var p=document.getElementById('metaProject').value,s=document.getElementById('metaSite').value,r=document.getElementById('metaSurveyor').value;
+  document.getElementById('metaProjectM').value=p;
+  document.getElementById('metaSiteM').value=s;
+  document.getElementById('metaSurveyorM').value=r;
+}
+function getMeta(id){
+  var d=document.getElementById(id).value,m=document.getElementById(id+'M');
+  return isMobile()&&m?m.value:d;
+}
+['metaProject','metaSite','metaSurveyor'].forEach(function(id){
+  document.getElementById(id).addEventListener('input',function(){document.getElementById(id+'M').value=this.value;});
+  document.getElementById(id+'M').addEventListener('input',function(){document.getElementById(id).value=this.value;});
+});
+
+function toggleMetaDrawer(){
+  var d=document.getElementById('metaDrawer');
+  d.classList.toggle('open');
+}
+
+// ── SNAPSHOT / UNDO ──
 function snapshot(desc){
   var imgs={};
   floors.forEach(function(f){if(f.planImage)imgs[f.id]=f.planImage;});
@@ -343,93 +524,128 @@ function snapshot(desc){
   if(undoStack.length>30)undoStack.shift();
   document.getElementById('undoBar').classList.add('hidden');
 }
-
 function undo(){
   if(!undoStack.length){showToast('Nothing to undo',true);return;}
-  var snap=undoStack.pop();
-  var parsed=JSON.parse(snap.state);
+  var snap=undoStack.pop(),parsed=JSON.parse(snap.state);
   floors=parsed.floors.map(function(f){return Object.assign({},f,{planImage:snap.imgs[f.id]||null,points:f.points.map(function(p){return Object.assign({},p);})});});
   floorIdCounter=parsed.floorIdCounter;pointIdCounter=parsed.pointIdCounter;
   if(parsed.dosimetryData)dosimetryData=parsed.dosimetryData;
-  if(!gf(currentFloorId))currentFloorId=floors[0]?floors[0].id:null;
+  if(!floors.find(function(f){return f.id===currentFloorId;}))currentFloorId=floors[0]?floors[0].id:null;
   currentPointId=null;
   renderAll();loadFloorPlan();
-  if(activeView==='dosimetry')renderDosimetryGrid();
+  if(activeView==='dosimetryView')renderDosimetryGrid();
   document.getElementById('undoMsg').textContent='Undone: '+snap.desc;
   document.getElementById('undoBar').classList.remove('hidden');
-  showToast('Undone: '+snap.desc);
+  showToast('Undone');
 }
+function renderAll(){renderFloorTabs();renderSidebars();renderEntry();renderStats();}
 
-function renderAll(){renderFloorTabs();renderSidebar();renderEntry();renderStats();}
-
+// ── INIT ──
 window.onload=function(){
   addFloorDirect('Ground Floor');
   setupCanvasEvents();setupDragDrop();renderDosimetryGrid();
   setInterval(function(){try{saveCurrentEntry();localStorage.setItem('ns_as',JSON.stringify({floors:floors.map(function(f){return Object.assign({},f,{planImage:null});}),dosimetryData:dosimetryData,floorIdCounter:floorIdCounter,pointIdCounter:pointIdCounter}));}catch(e){}},30000);
 };
 
+// ── MOBILE VIEW ROUTING ──
+function showView(viewName){
+  // special cases
+  if(viewName==='summaryView'){showSummary();return;}
+  if(viewName==='dosimetryView'){showDosimetry();return;}
+
+  // hide all panels
+  ['summaryPanel','dosimetryPanel'].forEach(function(id){document.getElementById(id).classList.remove('visible');});
+
+  var views=['pointsView','formView','planView'];
+  views.forEach(function(v){
+    var el=document.getElementById(v);
+    if(el)el.classList.toggle('active',v===viewName);
+  });
+
+  // nav buttons
+  var navMap={pointsView:'navBtnPoints',formView:'navBtnForm',planView:'navBtnPlan'};
+  ['navBtnPoints','navBtnForm','navBtnPlan','navBtnSummary','navBtnDose'].forEach(function(b){
+    var el=document.getElementById(b);if(el)el.classList.remove('active');
+  });
+  if(navMap[viewName]){var nb=document.getElementById(navMap[viewName]);if(nb)nb.classList.add('active');}
+
+  // Also update plan toolbar label if switching to plan
+  if(viewName==='planView'){loadFloorPlan();}
+
+  activeView=viewName;
+  // close meta drawer
+  document.getElementById('metaDrawer').classList.remove('open');
+}
+
+// ── FLOORS ──
 function addFloor(){
   floorModalMode='add';
   document.getElementById('floorModalTitle').textContent='Add Floor';
   document.getElementById('floorNameInput').value='';
   document.getElementById('floorModal').classList.remove('hidden');
-  setTimeout(function(){document.getElementById('floorNameInput').focus();},50);
+  setTimeout(function(){document.getElementById('floorNameInput').focus();},100);
 }
 function addFloorDirect(name){
-  snapshot('before add floor');
-  var id=gfid();
+  snapshot('add floor');var id=gfid();
   floors.push({id:id,name:name,planImage:null,points:[]});
   renderFloorTabs();switchFloor(id);
 }
 function openRenameFloor(){
-  if(activeView!=='floor'||!currentFloorId)return;
+  if(activeFloorView!=='floor'||!currentFloorId)return;
+  document.getElementById('metaDrawer').classList.remove('open');
   floorModalMode='rename';
   document.getElementById('floorModalTitle').textContent='Rename Floor';
   document.getElementById('floorNameInput').value=gcf().name;
   document.getElementById('floorModal').classList.remove('hidden');
-  setTimeout(function(){document.getElementById('floorNameInput').focus();},50);
+  setTimeout(function(){document.getElementById('floorNameInput').focus();},100);
 }
 function closeFloorModal(){document.getElementById('floorModal').classList.add('hidden');}
 function confirmFloor(){
   var name=document.getElementById('floorNameInput').value.trim();if(!name)return;
   if(floorModalMode==='add')addFloorDirect(name);
-  else{snapshot('before rename floor');gcf().name=name;renderFloorTabs();}
+  else{snapshot('rename floor');gcf().name=name;renderFloorTabs();}
   closeFloorModal();
 }
 document.getElementById('floorNameInput').addEventListener('keydown',function(e){if(e.key==='Enter')confirmFloor();if(e.key==='Escape')closeFloorModal();});
 
 function deleteFloor(){
-  if(activeView!=='floor'){showToast('Switch to a floor tab first',true);return;}
+  document.getElementById('metaDrawer').classList.remove('open');
+  if(activeFloorView!=='floor'){showToast('Switch to a floor tab first',true);return;}
   if(floors.length<=1){showToast('Cannot delete the only floor',true);return;}
   if(!confirm('Delete "'+gcf().name+'" and all its points?'))return;
-  snapshot('before delete floor');
+  snapshot('delete floor');
   floors=floors.filter(function(f){return f.id!==currentFloorId;});
   currentFloorId=null;currentPointId=null;
   renderFloorTabs();switchFloor(floors[0].id);
 }
 
 function switchFloor(fid){
-  saveCurrentEntry();activeView='floor';currentFloorId=fid;currentPointId=null;
-  document.getElementById('formPanel').style.display='flex';
-  document.getElementById('planPanel').style.display='flex';
+  saveCurrentEntry();activeFloorView='floor';currentFloorId=fid;currentPointId=null;
   document.getElementById('summaryPanel').classList.remove('visible');
   document.getElementById('dosimetryPanel').classList.remove('visible');
+  // restore floor views on desktop
+  var fv=document.getElementById('formView'),pv=document.getElementById('planView');
+  if(fv)fv.style.display='';if(pv)pv.style.display='';
   renderAll();loadFloorPlan();
 }
 function showSummary(){
-  saveCurrentEntry();activeView='summary';currentPointId=null;
-  document.getElementById('formPanel').style.display='none';
-  document.getElementById('planPanel').style.display='none';
+  saveCurrentEntry();activeFloorView='summary';currentPointId=null;
   document.getElementById('summaryPanel').classList.add('visible');
   document.getElementById('dosimetryPanel').classList.remove('visible');
+  var fv=document.getElementById('formView'),pv=document.getElementById('planView'),ptv=document.getElementById('pointsView');
+  if(fv)fv.classList.remove('active');if(pv)pv.classList.remove('active');if(ptv)ptv.classList.remove('active');
+  ['navBtnPoints','navBtnForm','navBtnPlan','navBtnDose'].forEach(function(b){var e=document.getElementById(b);if(e)e.classList.remove('active');});
+  var nb=document.getElementById('navBtnSummary');if(nb)nb.classList.add('active');
   renderFloorTabs();renderSummary();
 }
 function showDosimetry(){
-  saveCurrentEntry();activeView='dosimetry';currentPointId=null;
-  document.getElementById('formPanel').style.display='none';
-  document.getElementById('planPanel').style.display='none';
+  saveCurrentEntry();activeFloorView='dosimetry';currentPointId=null;
   document.getElementById('summaryPanel').classList.remove('visible');
   document.getElementById('dosimetryPanel').classList.add('visible');
+  var fv=document.getElementById('formView'),pv=document.getElementById('planView'),ptv=document.getElementById('pointsView');
+  if(fv)fv.classList.remove('active');if(pv)pv.classList.remove('active');if(ptv)ptv.classList.remove('active');
+  ['navBtnPoints','navBtnForm','navBtnPlan','navBtnSummary'].forEach(function(b){var e=document.getElementById(b);if(e)e.classList.remove('active');});
+  var nb=document.getElementById('navBtnDose');if(nb)nb.classList.add('active');
   renderFloorTabs();renderDosimetryGrid();
 }
 
@@ -439,27 +655,32 @@ function renderFloorTabs(){
   var addBtn=bar.querySelector('.add-floor-btn');
   floors.forEach(function(f){
     var btn=document.createElement('button');
-    btn.className='floor-tab'+(activeView==='floor'&&f.id===currentFloorId?' active':'');
+    btn.className='floor-tab'+(activeFloorView==='floor'&&f.id===currentFloorId?' active':'');
     btn.textContent=f.name;btn.onclick=function(){switchFloor(f.id);};
     bar.insertBefore(btn,addBtn);
   });
-  var sumBtn=document.createElement('button');
-  sumBtn.className='floor-tab special-tab'+(activeView==='summary'?' active':'');
-  sumBtn.textContent='Summary';sumBtn.onclick=showSummary;bar.insertBefore(sumBtn,addBtn);
-  var doseBtn=document.createElement('button');
-  doseBtn.className='floor-tab special-tab'+(activeView==='dosimetry'?' active':'');
-  doseBtn.textContent='Dosimetry';doseBtn.onclick=showDosimetry;bar.insertBefore(doseBtn,addBtn);
+  var sb=document.createElement('button');sb.className='floor-tab special-tab'+(activeFloorView==='summary'?' active':'');
+  sb.textContent='Summary';sb.onclick=showSummary;bar.insertBefore(sb,addBtn);
+  var db=document.createElement('button');db.className='floor-tab special-tab'+(activeFloorView==='dosimetry'?' active':'');
+  db.textContent='Dosimetry';db.onclick=showDosimetry;bar.insertBefore(db,addBtn);
 }
 
+// ── POINTS ──
 function addPoint(){
   var floor=gcf();if(!floor)return;
-  snapshot('before add point');saveCurrentEntry();
+  snapshot('add point');saveCurrentEntry();
   var pid=gpid(floor.id);
   floor.points.push({id:pid,db:'',peak:'',location:'',notes:'',pinX:null,pinY:null,timestamp:new Date().toISOString()});
-  currentPointId=pid;renderSidebar();renderEntry();renderStats();drawPlan();
-  setTimeout(function(){document.getElementById('inputDb').focus();},50);
+  currentPointId=pid;
+  renderSidebars();renderEntry();renderStats();drawPlan();
+  if(isMobile())showView('formView');
+  setTimeout(function(){var el=document.getElementById('inputDb');if(el)el.focus();},100);
 }
-function selectPoint(pid){saveCurrentEntry();currentPointId=pid;renderSidebar();renderEntry();drawPlan();}
+function selectPoint(pid){
+  saveCurrentEntry();currentPointId=pid;
+  renderSidebars();renderEntry();drawPlan();
+  if(isMobile())showView('formView');
+}
 function saveCurrentEntry(){
   if(!currentPointId)return;var floor=gcf();if(!floor)return;
   var pt=floor.points.find(function(p){return p.id===currentPointId;});if(!pt)return;
@@ -481,30 +702,32 @@ function deletePoint(){
   var floor=gcf();var idx=floor.points.findIndex(function(p){return p.id===currentPointId;});
   floor.points.splice(idx,1);
   currentPointId=floor.points.length>0?floor.points[Math.min(idx,floor.points.length-1)].id:null;
-  renderSidebar();renderEntry();renderStats();drawPlan();
+  renderSidebars();renderEntry();renderStats();drawPlan();
 }
 function saveAndNext(){
-  var dbv=document.getElementById('inputDb').value,pkv=document.getElementById('inputPeak').value;
-  document.getElementById('inputDb').classList.toggle('field-error',dbv==='');
-  document.getElementById('inputPeak').classList.toggle('field-error',pkv==='');
-  if(dbv===''||pkv===''){showToast('dB and Peak are required',true);return;}
+  var dv=document.getElementById('inputDb').value,pv=document.getElementById('inputPeak').value;
+  document.getElementById('inputDb').classList.toggle('field-error',dv==='');
+  document.getElementById('inputPeak').classList.toggle('field-error',pv==='');
+  if(dv===''||pv===''){showToast('dB and Peak required',true);return;}
   saveCurrentEntry();
   var floor=gcf();var idx=floor.points.findIndex(function(p){return p.id===currentPointId;});
   if(idx<floor.points.length-1){currentPointId=floor.points[idx+1].id;}
-  else{snapshot('before add point');var pid=gpid(floor.id);floor.points.push({id:pid,db:'',peak:'',location:'',notes:'',pinX:null,pinY:null,timestamp:new Date().toISOString()});currentPointId=pid;showToast('New point added');}
-  renderSidebar();renderEntry();renderStats();drawPlan();
-  setTimeout(function(){document.getElementById('inputDb').focus();},50);
+  else{snapshot('add point');var pid=gpid(floor.id);floor.points.push({id:pid,db:'',peak:'',location:'',notes:'',pinX:null,pinY:null,timestamp:new Date().toISOString()});currentPointId=pid;showToast('New point added');}
+  renderSidebars();renderEntry();renderStats();drawPlan();
+  setTimeout(function(){var el=document.getElementById('inputDb');if(el)el.focus();},100);
 }
 function saveAndPrev(){
   saveCurrentEntry();var floor=gcf();var idx=floor.points.findIndex(function(p){return p.id===currentPointId;});
-  if(idx>0){currentPointId=floor.points[idx-1].id;renderSidebar();renderEntry();drawPlan();}
+  if(idx>0){currentPointId=floor.points[idx-1].id;renderSidebars();renderEntry();drawPlan();}
 }
 
-function renderSidebar(){
-  var floor=gcf();var list=document.getElementById('pointList');var badge=document.getElementById('pointCountBadge');
-  if(!floor){list.innerHTML='';badge.textContent='0';return;}
-  badge.textContent=floor.points.length;
-  list.innerHTML=floor.points.map(function(pt){
+// ── RENDER ──
+function renderSidebars(){
+  var floor=gcf();
+  var count=floor?floor.points.length:0;
+  document.getElementById('pointCountBadge').textContent=count;
+  document.getElementById('pointCountMobile').textContent=count;
+  var html=floor?floor.points.map(function(pt){
     var isActive=pt.id===currentPointId,isComplete=pt.db!==''&&pt.peak!=='',hasPin=pt.pinX!==null;
     var pid='P'+String(pt.id).padStart(3,'0');
     return '<div class="point-item '+(isActive?'active':'')+'" onclick="selectPoint('+pt.id+')">'
@@ -512,8 +735,11 @@ function renderSidebar(){
       +'<div class="point-meta"><div class="point-db">'+(pt.db!==''?pt.db+' dB':'--')+'</div>'
       +'<div class="point-loc">'+(pt.location||pt.notes||'No description')+'</div></div>'
       +'<div class="point-dots">'+(hasPin?'<div class="dot-pin"></div>':'')+(isComplete?'<div class="dot-ok"></div>':'<div class="dot-warn"></div>')+'</div></div>';
-  }).join('');
-  var active=list.querySelector('.active');if(active)active.scrollIntoView({block:'nearest'});
+  }).join(''):'';
+  document.getElementById('pointListDesktop').innerHTML=html;
+  document.getElementById('pointListMobile').innerHTML=html;
+  var actD=document.getElementById('pointListDesktop').querySelector('.active');
+  if(actD)actD.scrollIntoView({block:'nearest'});
 }
 function renderEntry(){
   var floor=gcf();var card=document.getElementById('entryCard');var empty=document.getElementById('emptyState');var pinHint=document.getElementById('pinHint');
@@ -522,7 +748,7 @@ function renderEntry(){
   if(!pt){card.classList.add('hidden');empty.classList.remove('hidden');return;}
   card.classList.remove('hidden');empty.classList.add('hidden');
   document.getElementById('entryPointLabel').textContent='P'+String(pt.id).padStart(3,'0');
-  if(pt.timestamp){var d=new Date(pt.timestamp);document.getElementById('entryTimestamp').textContent=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+' - '+d.toLocaleDateString();}
+  if(pt.timestamp){var d=new Date(pt.timestamp);document.getElementById('entryTimestamp').textContent=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
   document.getElementById('inputDb').value=pt.db;
   document.getElementById('inputPeak').value=pt.peak;
   document.getElementById('inputLocation').value=pt.location;
@@ -542,10 +768,11 @@ function renderStats(){
   document.getElementById('statMaxPeak').textContent=peaks.length?Math.max.apply(null,peaks).toFixed(1):'--';
   var inc=pts.filter(function(p){return p.db===''||p.peak==='';});
   var banner=document.getElementById('incompleteBanner');
-  if(inc.length>0){banner.classList.remove('hidden');document.getElementById('incompleteBannerText').textContent=inc.length+' point'+(inc.length>1?'s':'')+' missing dB or Peak values';}
+  if(inc.length>0){banner.classList.remove('hidden');document.getElementById('incompleteBannerText').textContent=inc.length+' point'+(inc.length>1?'s':'')+' missing values';}
   else banner.classList.add('hidden');
 }
 
+// ── SUMMARY ──
 function renderSummary(){
   var proj=document.getElementById('metaProject').value||'Noise Survey';
   var site=document.getElementById('metaSite').value,surv=document.getElementById('metaSurveyor').value;
@@ -569,32 +796,28 @@ function renderSummary(){
       +'<div class="summary-row"><span class="summary-row-label">Max Peak</span><span class="summary-row-value">'+(peaks.length?Math.max.apply(null,peaks).toFixed(1):'--')+'</span></div>'
       +'<div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:'+pct+'%"></div></div>'
       +'<div style="font-size:11px;color:var(--text-dim);margin-top:5px;">'+pct+'% complete</div>'
-      +(inc.length>0?'<div class="incomplete-list">Missing: '+inc.map(function(p){return '<span class="incomplete-tag">P'+String(p.id).padStart(3,'0')+'</span>';}).join('')+'</div>':'')
+      +(inc.length>0?'<div class="incomplete-list">Missing: '+inc.map(function(p){return'<span class="incomplete-tag">P'+String(p.id).padStart(3,'0')+'</span>';}).join('')+'</div>':'')
       +'</div>';
   }).join('');
 }
 
-// DOSIMETRY
+// ── DOSIMETRY ──
 function getDoseLevel(v){if(v===''||isNaN(parseFloat(v)))return'empty';var n=parseFloat(v);if(n>=87)return'elv';if(n>=85)return'uaev';if(n>=80)return'laev';return'below';}
-function getDoseLabel(level){return{empty:'No data',below:'Below LAEV',laev:'Above LAEV 80',uaev:'Above UAEV 85',elv:'Above ELV 87'}[level];}
-
+function getDoseLabel(l){return{empty:'No data',below:'Below LAEV',laev:'Above LAEV 80',uaev:'Above UAEV 85',elv:'Above ELV 87'}[l];}
 function renderDosimetryGrid(){
-  var grid=document.getElementById('dosimetryGrid');
-  grid.innerHTML=dosimetryData.map(function(w,i){
-    var level=getDoseLevel(w.laeqd);
-    var filled=w.name||w.laeqd;
-    var statusClass=filled?(level==='empty'?'partial':'complete'):'';
-    return '<div class="dose-card" id="doseCard'+i+'">'
+  document.getElementById('dosimetryGrid').innerHTML=dosimetryData.map(function(w,i){
+    var level=getDoseLevel(w.laeqd),filled=w.name||w.laeqd,statusClass=filled?(level==='empty'?'partial':'complete'):'';
+    return'<div class="dose-card" id="doseCard'+i+'">'
       +'<div class="dose-card-header"><span class="dose-card-num">Worker '+w.slot+'</span><div class="dose-status '+statusClass+'"></div></div>'
       +'<div class="dose-form">'
-      +'<div class="span2"><label>Full Name</label><input type="text" placeholder="e.g. Jane Smith" value="'+esc(w.name)+'" oninput="updateDose('+i+',\'name\',this.value)"></div>'
-      +'<div class="span2"><label>Job Title / Role</label><input type="text" placeholder="e.g. Machine Operator" value="'+esc(w.title)+'" oninput="updateDose('+i+',\'title\',this.value)"></div>'
-      +'<div><label>Hours Worked</label><input type="number" placeholder="8" step="0.5" min="0" max="24" value="'+esc(w.hoursWork)+'" oninput="updateDose('+i+',\'hoursWork\',this.value)"></div>'
-      +'<div><label>LEP,d dB(A)</label><input type="number" placeholder="82.0" step="0.1" value="'+esc(w.laeqd)+'" oninput="updateDose('+i+',\'laeqd\',this.value)"></div>'
-      +'<div><label>LC,peak dB(C)</label><input type="number" placeholder="130.0" step="0.1" value="'+esc(w.lcpeak)+'" oninput="updateDose('+i+',\'lcpeak\',this.value)"></div>'
-      +'<div><label>HP Type</label><select onchange="updateDose('+i+',\'hpType\',this.value)">'+HP_TYPES.map(function(t){return'<option value="'+t+'"'+(w.hpType===t?' selected':'')+'>'+t+'</option>';}).join('')+'</select></div>'
-      +'<div><label>HP SNR / Rating</label><input type="text" placeholder="e.g. 28 dB SNR" value="'+esc(w.hpRating)+'" oninput="updateDose('+i+',\'hpRating\',this.value)"></div>'
-      +'<div class="span2"><label>Notes</label><input type="text" placeholder="e.g. Intermittent exposure, sensitive" value="'+esc(w.notes)+'" oninput="updateDose('+i+',\'notes\',this.value)"></div>'
+      +'<div class="span2"><label>Full Name</label><input type="text" placeholder="e.g. Jane Smith" value="'+esc(w.name)+'" oninput="ud('+i+',\'name\',this.value)"></div>'
+      +'<div class="span2"><label>Job Title</label><input type="text" placeholder="e.g. Machine Operator" value="'+esc(w.title)+'" oninput="ud('+i+',\'title\',this.value)"></div>'
+      +'<div><label>Hours</label><input type="number" placeholder="8" step="0.5" min="0" max="24" inputmode="decimal" value="'+esc(w.hoursWork)+'" oninput="ud('+i+',\'hoursWork\',this.value)"></div>'
+      +'<div><label>LEP,d dB(A)</label><input type="number" placeholder="82.0" step="0.1" inputmode="decimal" value="'+esc(w.laeqd)+'" oninput="ud('+i+',\'laeqd\',this.value)"></div>'
+      +'<div><label>LC,peak dB(C)</label><input type="number" placeholder="130.0" step="0.1" inputmode="decimal" value="'+esc(w.lcpeak)+'" oninput="ud('+i+',\'lcpeak\',this.value)"></div>'
+      +'<div><label>HP Type</label><select onchange="ud('+i+',\'hpType\',this.value)">'+HP_TYPES.map(function(t){return'<option value="'+t+'"'+(w.hpType===t?' selected':'')+'>'+t+'</option>';}).join('')+'</select></div>'
+      +'<div><label>HP Rating</label><input type="text" placeholder="28 dB SNR" value="'+esc(w.hpRating)+'" oninput="ud('+i+',\'hpRating\',this.value)"></div>'
+      +'<div class="span2"><label>Notes</label><input type="text" placeholder="e.g. Intermittent, sensitive" value="'+esc(w.notes)+'" oninput="ud('+i+',\'notes\',this.value)"></div>'
       +'</div>'
       +'<div class="dose-result-bar" id="drb'+i+'"><span class="dose-result">'+(w.laeqd!==''?'LEP,d: '+parseFloat(w.laeqd).toFixed(1)+' dB(A)':'')+'</span><span class="dose-badge '+level+'">'+getDoseLabel(level)+'</span></div>'
       +'</div>';
@@ -602,15 +825,14 @@ function renderDosimetryGrid(){
   updateDoseSummary();
 }
 function esc(v){return String(v||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
-function updateDose(i,field,value){
+function ud(i,field,value){
   dosimetryData[i][field]=value;
   var level=getDoseLevel(dosimetryData[i].laeqd);
   var rb=document.getElementById('drb'+i);
   if(rb)rb.innerHTML='<span class="dose-result">'+(dosimetryData[i].laeqd!==''?'LEP,d: '+parseFloat(dosimetryData[i].laeqd).toFixed(1)+' dB(A)':'')+'</span><span class="dose-badge '+level+'">'+getDoseLabel(level)+'</span>';
   var filled=dosimetryData[i].name||dosimetryData[i].laeqd;
-  var statusClass=filled?(level==='empty'?'partial':'complete'):'';
   var card=document.getElementById('doseCard'+i);
-  if(card){var dot=card.querySelector('.dose-status');dot.className='dose-status '+(statusClass||'');}
+  if(card)card.querySelector('.dose-status').className='dose-status '+(filled?(level==='empty'?'partial':'complete'):'');
   updateDoseSummary();
 }
 function updateDoseSummary(){
@@ -622,10 +844,10 @@ function updateDoseSummary(){
   document.getElementById('doseStatUAEV').textContent=uaev;
 }
 function clearAllDosimetry(){
-  if(!confirm('Clear all dosimetry data for all 10 workers?'))return;
-  snapshot('before clear dosimetry');
+  if(!confirm('Clear all dosimetry data?'))return;
+  snapshot('clear dosimetry');
   dosimetryData=Array.from({length:10},function(_,i){return{slot:i+1,name:'',title:'',hoursWork:'',laeqd:'',lcpeak:'',hpType:'',hpRating:'',notes:''};});
-  renderDosimetryGrid();showToast('Dosimetry data cleared');
+  renderDosimetryGrid();showToast('Cleared');
 }
 function exportDosimetryCSV(){
   var proj=document.getElementById('metaProject').value,site=document.getElementById('metaSite').value,surv=document.getElementById('metaSurveyor').value;
@@ -633,9 +855,7 @@ function exportDosimetryCSV(){
   if(proj)rows.push(['"Project: '+proj+'"']);if(site)rows.push(['"Site: '+site+'"']);if(surv)rows.push(['"Surveyor: '+surv+'"']);
   rows.push(['"Export date: '+new Date().toLocaleDateString('en-GB')+'"']);rows.push([]);
   rows.push(['Worker Slot','Full Name','Job Title','Hours Worked','LEP,d dB(A)','LC,peak dB(C)','Exposure Level','HP Type','HP Rating','Notes']);
-  dosimetryData.forEach(function(w){
-    rows.push([w.slot,'"'+(w.name||'').replace(/"/g,'""')+'"','"'+(w.title||'').replace(/"/g,'""')+'"',w.hoursWork,w.laeqd,w.lcpeak,getDoseLabel(getDoseLevel(w.laeqd)),'"'+(w.hpType||'')+'"','"'+(w.hpRating||'').replace(/"/g,'""')+'"','"'+(w.notes||'').replace(/"/g,'""')+'"']);
-  });
+  dosimetryData.forEach(function(w){rows.push([w.slot,'"'+(w.name||'').replace(/"/g,'""')+'"','"'+(w.title||'').replace(/"/g,'""')+'"',w.hoursWork,w.laeqd,w.lcpeak,getDoseLabel(getDoseLevel(w.laeqd)),'"'+(w.hpType||'')+'"','"'+(w.hpRating||'').replace(/"/g,'""')+'"','"'+(w.notes||'').replace(/"/g,'""')+'"']);});
   var csv=rows.map(function(r){return Array.isArray(r)?r.join(','):'';}).join('\n');
   var blob=new Blob([csv],{type:'text/csv'});var url=URL.createObjectURL(blob);var a=document.createElement('a');
   var name=(proj||site||'dosimetry').replace(/[^a-z0-9]/gi,'_').toLowerCase();
@@ -643,34 +863,34 @@ function exportDosimetryCSV(){
   showToast('Dosimetry CSV exported');
 }
 
-// FLOOR PLAN
+// ── FLOOR PLAN ──
 function loadFloorPlan(){
   var floor=gcf();var canvas=document.getElementById('planCanvas');var dropZone=document.getElementById('planDropZone');
   var zc=document.getElementById('zoomControls');var legend=document.getElementById('planLegend');planImg=null;
   if(!floor||!floor.planImage){canvas.style.display='none';dropZone.style.display='flex';zc.style.display='none';legend.style.display='none';document.getElementById('planToolbarLabel').textContent='Floor Plan';return;}
   var img=new Image();
-  img.onload=function(){planImg=img;canvas.style.display='block';dropZone.style.display='none';zc.style.display='flex';legend.style.display='flex';resetView();document.getElementById('planToolbarLabel').textContent=gcf().name;renderEntry();};
+  img.onload=function(){planImg=img;canvas.style.display='block';dropZone.style.display='none';zc.style.display='flex';legend.style.display='flex';resetView();document.getElementById('planToolbarLabel').textContent=gcf()?gcf().name:'Floor Plan';renderEntry();};
   img.src=floor.planImage;
 }
 function loadPlan(e){
   var file=e.target.files[0];if(!file)return;
   var reader=new FileReader();
-  reader.onload=function(ev){snapshot('before import floor plan');gcf().planImage=ev.target.result;loadFloorPlan();showToast('Floor plan loaded');};
+  reader.onload=function(ev){snapshot('import plan');gcf().planImage=ev.target.result;loadFloorPlan();showToast('Floor plan loaded');};
   reader.readAsDataURL(file);e.target.value='';
 }
 function clearPlan(){
   if(!gcf()||!gcf().planImage)return;
-  if(!confirm('Remove floor plan? Pins will be kept.'))return;
-  snapshot('before remove floor plan');gcf().planImage=null;loadFloorPlan();
+  if(!confirm('Remove floor plan?'))return;
+  snapshot('remove plan');gcf().planImage=null;loadFloorPlan();
 }
 function setupDragDrop(){
   var wrapper=document.getElementById('planWrapper');
   wrapper.addEventListener('dragover',function(e){e.preventDefault();});
   wrapper.addEventListener('drop',function(e){
     e.preventDefault();var file=e.dataTransfer.files[0];
-    if(!file||!file.type.startsWith('image/')){showToast('Please drop an image file',true);return;}
+    if(!file||!file.type.startsWith('image/')){showToast('Drop an image file',true);return;}
     var reader=new FileReader();
-    reader.onload=function(ev){snapshot('before import plan');gcf().planImage=ev.target.result;loadFloorPlan();showToast('Floor plan loaded');};
+    reader.onload=function(ev){snapshot('import plan');gcf().planImage=ev.target.result;loadFloorPlan();showToast('Floor plan loaded');};
     reader.readAsDataURL(file);
   });
 }
@@ -685,24 +905,82 @@ function drawPlan(){
   floor.points.forEach(function(pt){
     if(pt.pinX===null||pt.pinY===null)return;
     var sx=pt.pinX*viewScale+viewOffsetX,sy=pt.pinY*viewScale+viewOffsetY;
-    var isActive=pt.id===currentPointId,isComplete=pt.db!==''&&pt.peak!=='',r=isActive?12:9;
-    ctx.shadowColor=isActive?'rgba(0,102,204,0.5)':'rgba(0,0,0,0.2)';ctx.shadowBlur=isActive?14:5;
+    var isActive=pt.id===currentPointId,isComplete=pt.db!==''&&pt.peak!=='',r=isActive?14:10;
+    ctx.shadowColor=isActive?'rgba(0,102,204,0.5)':'rgba(0,0,0,0.25)';ctx.shadowBlur=isActive?16:6;
     ctx.beginPath();ctx.arc(sx,sy,r,0,Math.PI*2);
     ctx.fillStyle=isActive?'#0066cc':(isComplete?'#2e7d32':'#e67e00');
     ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=isActive?2.5:2;ctx.stroke();ctx.shadowBlur=0;
     ctx.font='bold '+(isActive?9:8)+'px DM Mono,monospace';ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillStyle='#fff';ctx.fillText('P'+String(pt.id).padStart(3,'0'),sx,sy);
     if(pt.db!==''){
-      ctx.font='10px DM Sans,sans-serif';ctx.textAlign='center';
+      ctx.font='11px DM Sans,sans-serif';ctx.textAlign='center';
       var label=pt.db+' dB',tw=ctx.measureText(label).width;
       ctx.fillStyle='rgba(255,255,255,0.93)';ctx.beginPath();
-      if(ctx.roundRect)ctx.roundRect(sx-tw/2-4,sy-r-16,tw+8,14,4);else ctx.rect(sx-tw/2-4,sy-r-16,tw+8,14);
-      ctx.fill();ctx.fillStyle=isActive?'#0055aa':'#1a2332';ctx.fillText(label,sx,sy-r-9);
+      if(ctx.roundRect)ctx.roundRect(sx-tw/2-4,sy-r-18,tw+8,15,4);else ctx.rect(sx-tw/2-4,sy-r-18,tw+8,15);
+      ctx.fill();ctx.fillStyle=isActive?'#0055aa':'#1a2332';ctx.fillText(label,sx,sy-r-10);
     }
   });
 }
 function setupCanvasEvents(){
   var canvas=document.getElementById('planCanvas');
+
+  // Touch events
+  var touchMode='none',lastTouchDist=0,lastTouchMid={x:0,y:0};
+  canvas.addEventListener('touchstart',function(e){
+    e.preventDefault();
+    if(e.touches.length===1){
+      touchMode='single';
+      panStart={x:e.touches[0].clientX,y:e.touches[0].clientY};
+      panOrigin={x:viewOffsetX,y:viewOffsetY};
+    } else if(e.touches.length===2){
+      touchMode='pinch';
+      var dx=e.touches[1].clientX-e.touches[0].clientX,dy=e.touches[1].clientY-e.touches[0].clientY;
+      lastTouchDist=Math.sqrt(dx*dx+dy*dy);
+      lastTouchMid={x:(e.touches[0].clientX+e.touches[1].clientX)/2,y:(e.touches[0].clientY+e.touches[1].clientY)/2};
+    }
+  },{passive:false});
+  canvas.addEventListener('touchmove',function(e){
+    e.preventDefault();
+    if(touchMode==='single'&&e.touches.length===1){
+      if(mode==='pan'){
+        viewOffsetX=panOrigin.x+(e.touches[0].clientX-panStart.x);
+        viewOffsetY=panOrigin.y+(e.touches[0].clientY-panStart.y);
+        drawPlan();
+      }
+    } else if(touchMode==='pinch'&&e.touches.length===2){
+      var dx=e.touches[1].clientX-e.touches[0].clientX,dy=e.touches[1].clientY-e.touches[0].clientY;
+      var dist=Math.sqrt(dx*dx+dy*dy),f=dist/lastTouchDist;
+      var rect=canvas.getBoundingClientRect();
+      var mx=lastTouchMid.x-rect.left,my=lastTouchMid.y-rect.top;
+      viewOffsetX=mx-(mx-viewOffsetX)*f;viewOffsetY=my-(my-viewOffsetY)*f;viewScale*=f;
+      lastTouchDist=dist;drawPlan();
+    }
+  },{passive:false});
+  canvas.addEventListener('touchend',function(e){
+    if(touchMode==='single'&&e.changedTouches.length===1){
+      var t=e.changedTouches[0];
+      var dx=t.clientX-panStart.x,dy=t.clientY-panStart.y;
+      if(Math.sqrt(dx*dx+dy*dy)<8){
+        // treat as tap
+        var rect=canvas.getBoundingClientRect(),mx=t.clientX-rect.left,my=t.clientY-rect.top;
+        var floor=gcf();if(!floor)return;
+        for(var i=floor.points.length-1;i>=0;i--){
+          var pt=floor.points[i];if(pt.pinX===null)continue;
+          var sx=pt.pinX*viewScale+viewOffsetX,sy=pt.pinY*viewScale+viewOffsetY;
+          if(Math.sqrt((mx-sx)*(mx-sx)+(my-sy)*(my-sy))<18){selectPoint(pt.id);return;}
+        }
+        if(mode==='pin'){
+          if(!currentPointId){showToast('Select a point first',true);return;}
+          var imgX=(mx-viewOffsetX)/viewScale,imgY=(my-viewOffsetY)/viewScale;
+          var pt2=floor.points.find(function(p){return p.id===currentPointId;});
+          if(pt2){pt2.pinX=imgX;pt2.pinY=imgY;drawPlan();renderSidebars();renderEntry();showToast('Pin placed');}
+        }
+      }
+    }
+    if(e.touches.length===0)touchMode='none';
+  },{passive:false});
+
+  // Mouse events (desktop)
   canvas.addEventListener('click',function(e){
     if(mode!=='pin')return;
     var rect=canvas.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;
@@ -710,12 +988,12 @@ function setupCanvasEvents(){
     for(var i=floor.points.length-1;i>=0;i--){
       var pt=floor.points[i];if(pt.pinX===null)continue;
       var sx=pt.pinX*viewScale+viewOffsetX,sy=pt.pinY*viewScale+viewOffsetY;
-      if(Math.sqrt((mx-sx)*(mx-sx)+(my-sy)*(my-sy))<13){selectPoint(pt.id);return;}
+      if(Math.sqrt((mx-sx)*(mx-sx)+(my-sy)*(my-sy))<14){selectPoint(pt.id);return;}
     }
-    if(!currentPointId){showToast('Select or create a point first',true);return;}
+    if(!currentPointId){showToast('Select a point first',true);return;}
     var imgX=(mx-viewOffsetX)/viewScale,imgY=(my-viewOffsetY)/viewScale;
     var pt2=floor.points.find(function(p){return p.id===currentPointId;});
-    if(pt2){pt2.pinX=imgX;pt2.pinY=imgY;drawPlan();renderSidebar();renderEntry();}
+    if(pt2){pt2.pinX=imgX;pt2.pinY=imgY;drawPlan();renderSidebars();renderEntry();}
   });
   canvas.addEventListener('mousedown',function(e){if(mode!=='pan')return;isPanning=true;panStart={x:e.clientX,y:e.clientY};panOrigin={x:viewOffsetX,y:viewOffsetY};canvas.style.cursor='grabbing';});
   window.addEventListener('mousemove',function(e){if(!isPanning)return;viewOffsetX=panOrigin.x+(e.clientX-panStart.x);viewOffsetY=panOrigin.y+(e.clientY-panStart.y);drawPlan();});
@@ -725,11 +1003,11 @@ function setupCanvasEvents(){
 }
 function setMode(m){mode=m;document.getElementById('planCanvas').style.cursor=m==='pan'?'grab':'crosshair';document.getElementById('modePinBtn').classList.toggle('active',m==='pin');document.getElementById('modePanBtn').classList.toggle('active',m==='pan');}
 
-// SAVE / LOAD
+// ── SAVE / LOAD ──
 function saveSession(){
-  saveCurrentEntry();
+  saveCurrentEntry();syncMeta();
   var proj=document.getElementById('metaProject').value,site=document.getElementById('metaSite').value,surv=document.getElementById('metaSurveyor').value;
-  var data={version:3,meta:{project:proj,site:site,surveyor:surv,savedAt:new Date().toISOString()},floors:floors,floorIdCounter:floorIdCounter,pointIdCounter:pointIdCounter,dosimetryData:dosimetryData};
+  var data={version:4,meta:{project:proj,site:site,surveyor:surv,savedAt:new Date().toISOString()},floors:floors,floorIdCounter:floorIdCounter,pointIdCounter:pointIdCounter,dosimetryData:dosimetryData};
   var blob=new Blob([JSON.stringify(data)],{type:'application/json'});var url=URL.createObjectURL(blob);var a=document.createElement('a');
   var name=(proj||site||'noise-survey').replace(/[^a-z0-9]/gi,'_').toLowerCase();
   a.href=url;a.download=name+'-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(url);showToast('Session saved');
@@ -740,28 +1018,34 @@ function loadSession(e){
   reader.onload=function(ev){
     try{
       var data=JSON.parse(ev.target.result);if(!data.floors)throw new Error('Invalid file');
-      snapshot('before load session');
+      snapshot('before load');
       floors=data.floors;floorIdCounter=data.floorIdCounter||floors.length;pointIdCounter=data.pointIdCounter||{};
       if(data.dosimetryData)dosimetryData=data.dosimetryData;
-      if(data.meta){document.getElementById('metaProject').value=data.meta.project||'';document.getElementById('metaSite').value=data.meta.site||'';document.getElementById('metaSurveyor').value=data.meta.surveyor||'';}
+      if(data.meta){
+        document.getElementById('metaProject').value=data.meta.project||'';
+        document.getElementById('metaSite').value=data.meta.site||'';
+        document.getElementById('metaSurveyor').value=data.meta.surveyor||'';
+        syncMeta();
+      }
       currentFloorId=floors[0]?floors[0].id:null;currentPointId=null;
-      renderAll();loadFloorPlan();if(activeView==='dosimetry')renderDosimetryGrid();
+      renderAll();loadFloorPlan();
+      if(activeFloorView==='dosimetry')renderDosimetryGrid();
       showToast('Session loaded');
     }catch(err){showToast('Could not load: '+err.message,true);}
   };
   reader.readAsText(file);e.target.value='';
 }
 
-// EXPORT CSV
+// ── EXPORT CSV ──
 function exportCSV(){
   saveCurrentEntry();
   var ti=floors.reduce(function(a,f){return a+f.points.filter(function(p){return p.db===''||p.peak==='';}).length;},0);
-  if(ti>0&&!confirm(ti+' point'+(ti>1?'s are':' is')+' missing dB or Peak values. Export anyway?'))return;
+  if(ti>0&&!confirm(ti+' point'+(ti>1?'s are':' is')+' missing values. Export anyway?'))return;
   var proj=document.getElementById('metaProject').value,site=document.getElementById('metaSite').value,surv=document.getElementById('metaSurveyor').value;
   var rows=[];
   if(proj)rows.push(['"Project: '+proj+'"']);if(site)rows.push(['"Site: '+site+'"']);if(surv)rows.push(['"Surveyor: '+surv+'"']);
   rows.push(['"Export date: '+new Date().toLocaleDateString('en-GB')+'"']);rows.push([]);
-  rows.push(['Floor','Point ID','dB Level','Peak dB','Location Description','Notes','Timestamp','Pin X','Pin Y']);
+  rows.push(['Floor','Point ID','dB Level','Peak dB','Location','Notes','Timestamp','Pin X','Pin Y']);
   floors.forEach(function(floor){floor.points.forEach(function(pt){rows.push(['"'+floor.name+'"','P'+String(pt.id).padStart(3,'0'),pt.db,pt.peak,'"'+pt.location.replace(/"/g,'""')+'"','"'+(pt.notes||'').replace(/"/g,'""')+'"',pt.timestamp?new Date(pt.timestamp).toLocaleString('en-GB'):'',pt.pinX!==null?pt.pinX.toFixed(1):'',pt.pinY!==null?pt.pinY.toFixed(1):'']);});});
   var csv=rows.map(function(r){return Array.isArray(r)?r.join(','):'';}).join('\n');
   var blob=new Blob([csv],{type:'text/csv'});var url=URL.createObjectURL(blob);var a=document.createElement('a');
@@ -769,10 +1053,13 @@ function exportCSV(){
   a.href=url;a.download=name+'-'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(url);showToast('CSV exported');
 }
 
+// ── PRINT ──
 function printSummary(){saveCurrentEntry();renderSummary();showSummary();document.getElementById('printHeader').style.display='block';setTimeout(function(){window.print();document.getElementById('printHeader').style.display='none';},200);}
 
+// ── TOAST ──
 function showToast(msg,isError){var t=document.getElementById('toast');t.textContent=msg;t.classList.toggle('error',!!isError);t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
 
+// ── KEYBOARD ──
 document.addEventListener('keydown',function(e){
   if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT')return;
   if((e.ctrlKey||e.metaKey)&&e.key==='z'){e.preventDefault();undo();return;}
