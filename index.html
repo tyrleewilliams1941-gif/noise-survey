@@ -419,6 +419,7 @@
           <div class="form-group"><label class="required">Peak dB</label><input type="number" id="inputPeak" placeholder="85.2" step="0.1" inputmode="decimal"></div>
           <div class="form-group full"><label>Location</label><textarea id="inputLocation" placeholder="e.g. North wall, HVAC unit, 1.5m height" rows="2"></textarea></div>
           <div class="form-group full"><label>Notes / Flags</label><input type="text" id="inputNotes" placeholder="e.g. High background, repeated"></div>
+          <div class="form-group"><label>Pin Size <span style="font-weight:400;color:var(--text-dim)">(blank = global)</span></label><input type="number" id="inputPinSize" placeholder="Default" min="6" max="40" step="1" inputmode="numeric"></div>
         </div>
         <div class="pin-hint hidden" id="pinHint"><div class="dot"></div>Switch to Plan tab to place this point's pin</div>
         <div class="form-actions">
@@ -439,6 +440,12 @@
         <button class="btn-danger btn-sm" id="clearLastHatchBtn" onclick="clearLastHatch()" style="display:none">&#8617; Undo Zone</button>
         <label class="label-btn">&#128444; Plan<input type="file" id="planFileInput" accept="image/*" style="display:none" onchange="loadPlan(event)"></label>
         <button class="btn-danger btn-sm" onclick="clearPlan()">Remove</button>
+        <div style="display:flex;align-items:center;gap:4px;margin-left:auto;flex-shrink:0;">
+          <span style="font-size:10px;font-family:DM Mono,monospace;text-transform:uppercase;letter-spacing:.08em;color:var(--text-dim);">Size</span>
+          <button class="zoom-btn" onclick="changeGlobalPinSize(-2)" style="width:28px;height:28px;font-size:16px;">&#8722;</button>
+          <span id="pinSizeLabel" style="font-size:12px;font-family:DM Mono,monospace;color:var(--text);min-width:24px;text-align:center;">18</span>
+          <button class="zoom-btn" onclick="changeGlobalPinSize(2)" style="width:28px;height:28px;font-size:16px;">+</button>
+        </div>
       </div>
       <div class="plan-canvas-wrapper" id="planWrapper">
         <div class="plan-drop-zone" id="planDropZone" onclick="document.getElementById('planFileInput').click()">
@@ -503,6 +510,21 @@
       <div class="dosimetry-grid" id="dosimetryGrid"></div>
     </div>
 
+    <!-- LOG PANEL -->
+    <div class="full-panel" id="logPanel">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div class="panel-title">Points Log</div>
+          <div class="panel-subtitle" id="logSubtitle">All measurement points across all floors</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <button class="btn-export" onclick="exportLogTXT()">&#8681; Export TXT</button>
+          <button class="btn-secondary btn-sm" onclick="copyLog()">&#128203; Copy</button>
+        </div>
+      </div>
+      <div id="logContent" style="font-family:'DM Mono',monospace;font-size:13px;line-height:1.9;color:var(--text);white-space:pre-wrap;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;overflow-x:auto;"></div>
+    </div>
+
   </div><!-- /content -->
 </div><!-- /main -->
 
@@ -556,7 +578,7 @@ var floors=[],currentFloorId=null,currentPointId=null,activeView='formView',acti
 var floorModalMode='add',floorIdCounter=0,pointIdCounter={},undoStack=[];
 var dosimetryData=Array.from({length:10},function(_,i){return{slot:i+1,name:'',title:'',hoursWork:'',laeqd:'',lcpeak:'',hpType:'',hpRating:'',notes:''};});
 function makeDoseWorker(slot){return{slot:slot,name:'',title:'',hoursWork:'',laeqd:'',lcpeak:'',hpType:'',hpRating:'',notes:''};}
-var planImg=null,viewOffsetX=0,viewOffsetY=0,viewScale=1,mode='pin';
+var planImg=null,viewOffsetX=0,viewOffsetY=0,viewScale=1,mode='pin',globalPinSize=18;
 var hatchPoints=[],isDrawingHatch=false,hatchPreview=null;
 var isPanning=false,panStart={x:0,y:0},panOrigin={x:0,y:0};
 var isMobile=function(){return window.innerWidth<768;};
@@ -652,7 +674,7 @@ function showView(viewName){
   if(viewName==='dosimetryView'){showDosimetry();return;}
 
   // hide all panels
-  ['summaryPanel','dosimetryPanel'].forEach(function(id){document.getElementById(id).classList.remove('visible');});
+  ['summaryPanel','dosimetryPanel','logPanel'].forEach(function(id){document.getElementById(id).classList.remove('visible');});
 
   var views=['pointsView','formView','planView'];
   views.forEach(function(v){
@@ -667,8 +689,14 @@ function showView(viewName){
   });
   if(navMap[viewName]){var nb=document.getElementById(navMap[viewName]);if(nb)nb.classList.add('active');}
 
-  // Also update plan toolbar label if switching to plan
-  if(viewName==='planView'){loadFloorPlan();}
+  // When switching to plan view, ensure canvas draws with correct dimensions
+  if(viewName==='planView'){
+    // Small delay to let the CSS transition complete before measuring wrapper
+    setTimeout(function(){
+      if(planImg)resetView();
+      else loadFloorPlan();
+    },50);
+  }
 
   activeView=viewName;
   // close meta drawer
@@ -721,6 +749,7 @@ function switchFloor(fid){
   saveCurrentEntry();activeFloorView='floor';currentFloorId=fid;currentPointId=null;
   document.getElementById('summaryPanel').classList.remove('visible');
   document.getElementById('dosimetryPanel').classList.remove('visible');
+  document.getElementById('logPanel').classList.remove('visible');
   // restore floor views on desktop
   var fv=document.getElementById('formView'),pv=document.getElementById('planView');
   if(fv)fv.style.display='';if(pv)pv.style.display='';
@@ -730,6 +759,7 @@ function showSummary(){
   saveCurrentEntry();activeFloorView='summary';currentPointId=null;
   document.getElementById('summaryPanel').classList.add('visible');
   document.getElementById('dosimetryPanel').classList.remove('visible');
+  document.getElementById('logPanel').classList.remove('visible');
   var fv=document.getElementById('formView'),pv=document.getElementById('planView'),ptv=document.getElementById('pointsView');
   if(fv)fv.classList.remove('active');if(pv)pv.classList.remove('active');if(ptv)ptv.classList.remove('active');
   ['navBtnPoints','navBtnForm','navBtnPlan','navBtnDose'].forEach(function(b){var e=document.getElementById(b);if(e)e.classList.remove('active');});
@@ -740,11 +770,103 @@ function showDosimetry(){
   saveCurrentEntry();activeFloorView='dosebadges';currentPointId=null;
   document.getElementById('summaryPanel').classList.remove('visible');
   document.getElementById('dosimetryPanel').classList.add('visible');
+  document.getElementById('logPanel').classList.remove('visible');
   var fv=document.getElementById('formView'),pv=document.getElementById('planView'),ptv=document.getElementById('pointsView');
   if(fv)fv.classList.remove('active');if(pv)pv.classList.remove('active');if(ptv)ptv.classList.remove('active');
   ['navBtnPoints','navBtnForm','navBtnPlan','navBtnSummary'].forEach(function(b){var e=document.getElementById(b);if(e)e.classList.remove('active');});
   var nb=document.getElementById('navBtnDose');if(nb)nb.classList.add('active');
   renderFloorTabs();renderDosimetryGrid();
+}
+function showLog(){
+  saveCurrentEntry();activeFloorView='log';currentPointId=null;
+  ['summaryPanel','dosimetryPanel','logPanel'].forEach(function(id){document.getElementById(id).classList.remove('visible');});
+  document.getElementById('logPanel').classList.add('visible');
+  var fv=document.getElementById('formView'),pv=document.getElementById('planView'),ptv=document.getElementById('pointsView');
+  if(fv)fv.classList.remove('active');if(pv)pv.classList.remove('active');if(ptv)ptv.classList.remove('active');
+  ['navBtnPoints','navBtnForm','navBtnPlan','navBtnSummary','navBtnDose'].forEach(function(b){var e=document.getElementById(b);if(e)e.classList.remove('active');});
+  renderFloorTabs();renderLog();
+}
+function renderLog(){
+  var proj=document.getElementById('metaProject').value;
+  var site=document.getElementById('metaSite').value;
+  var surv=document.getElementById('metaSurveyor').value;
+  var date=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
+  var lines=[];
+  // Header block
+  lines.push('NOISE SURVEY — POINTS LOG');
+  lines.push('═'.repeat(44));
+  if(proj)lines.push('  Project  : '+proj);
+  if(site) lines.push('  Site     : '+site);
+  if(surv) lines.push('  Surveyor : '+surv);
+  lines.push('  Date     : '+date);
+  lines.push('');
+  var totalPoints=0,totalComplete=0;
+  floors.forEach(function(floor){
+    var pts=floor.points;
+    if(!pts.length)return;
+    lines.push('┌─ '+floor.name.toUpperCase()+' ──────────────────────────────');
+    lines.push('│  Points: '+pts.length);
+    var complete=pts.filter(function(p){return p.db!==''&&p.peak!=='';});
+    var dbs=complete.map(function(p){return parseFloat(p.db);});
+    if(dbs.length){
+      lines.push('│  Max dB: '+Math.max.apply(null,dbs).toFixed(1)+' dB(A)   Avg: '+(dbs.reduce(function(a,b){return a+b;},0)/dbs.length).toFixed(1)+' dB(A)');
+    }
+    lines.push('│');
+    pts.forEach(function(pt){
+      var pid='P'+String(pt.id).padStart(3,'0');
+      var status=pt.db===''||pt.peak===''?'⚠ incomplete':'✓';
+      lines.push('│  • '+pid+'  '+status);
+      lines.push('│      dB Level : '+(pt.db!==''?pt.db+' dB(A)':'—'));
+      lines.push('│      Peak     : '+(pt.peak!==''?pt.peak+' dB(C)':'—'));
+      if(pt.db!==''){ lines.push('│      Band     : '+dbBandLabel(pt.db)); }
+      if(pt.location)lines.push('│      Location : '+pt.location);
+      if(pt.notes)   lines.push('│      Notes    : '+pt.notes);
+      var pinned=pt.pinX!==null?'Yes ('+pt.pinX.toFixed(0)+', '+pt.pinY.toFixed(0)+')':'No';
+      lines.push('│      Pinned   : '+pinned);
+      if(pt.timestamp)lines.push('│      Time     : '+new Date(pt.timestamp).toLocaleString('en-GB'));
+      lines.push('│');
+    });
+    lines.push('└'+'─'.repeat(43));
+    lines.push('');
+    totalPoints+=pts.length;
+    totalComplete+=complete.length;
+  });
+  lines.push('═'.repeat(44));
+  lines.push('  Total points : '+totalPoints);
+  lines.push('  Completed    : '+totalComplete+' / '+totalPoints);
+  if(totalPoints>0)lines.push('  Coverage     : '+Math.round((totalComplete/totalPoints)*100)+'%');
+  lines.push('  Generated    : '+new Date().toLocaleString('en-GB'));
+  lines.push('═'.repeat(44));
+  var txt=lines.join('\n');
+  document.getElementById('logContent').textContent=txt;
+  document.getElementById('logSubtitle').textContent=totalPoints+' points across '+floors.length+' floor'+(floors.length!==1?'s':'');
+  return txt;
+}
+function dbBandLabel(db){
+  if(db===''||isNaN(parseFloat(db)))return'No data';
+  var v=parseFloat(db);
+  if(v<75)return'Low  (<75 dB)';
+  if(v<80)return'Moderate  (75–80 dB)';
+  if(v<85)return'Above LAEV  (80–85 dB)';
+  if(v<90)return'Above UAEV  (85–90 dB)';
+  return'Critical  (>90 dB)';
+}
+function exportLogTXT(){
+  var txt=renderLog();
+  var proj=document.getElementById('metaProject').value;
+  var site=document.getElementById('metaSite').value;
+  var name=((proj||site||'noise-survey')+'-log').replace(/[^a-z0-9]/gi,'_').toLowerCase();
+  var blob=new Blob([txt],{type:'text/plain'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;a.download=name+'-'+new Date().toISOString().slice(0,10)+'.txt';
+  a.click();URL.revokeObjectURL(url);
+  showToast('Log exported');
+}
+function copyLog(){
+  var txt=renderLog();
+  if(navigator.clipboard){navigator.clipboard.writeText(txt).then(function(){showToast('Copied to clipboard');});}
+  else{showToast('Copy not supported in this browser',true);}
 }
 
 function renderFloorTabs(){
@@ -761,6 +883,8 @@ function renderFloorTabs(){
   sb.textContent='Summary';sb.onclick=showSummary;bar.insertBefore(sb,addBtn);
   var db=document.createElement('button');db.className='floor-tab special-tab'+(activeFloorView==='dosebadges'?' active':'');
   db.textContent='Dose Badges';db.onclick=showDosimetry;bar.insertBefore(db,addBtn);
+  var lb=document.createElement('button');lb.className='floor-tab special-tab'+(activeFloorView==='log'?' active':'');
+  lb.textContent='Log';lb.onclick=showLog;bar.insertBefore(lb,addBtn);
 }
 
 // ── POINTS ──
@@ -768,7 +892,7 @@ function addPoint(){
   var floor=gcf();if(!floor)return;
   snapshot('add point');saveCurrentEntry();
   var pid=gpid(floor.id);
-  floor.points.push({id:pid,db:'',peak:'',location:'',notes:'',pinX:null,pinY:null,timestamp:new Date().toISOString()});
+  floor.points.push({id:pid,db:'',peak:'',location:'',notes:'',pinX:null,pinY:null,pinSize:null,timestamp:new Date().toISOString()});
   currentPointId=pid;
   renderSidebars();renderEntry();renderStats();drawPlan();
   if(isMobile())showView('formView');
@@ -786,6 +910,8 @@ function saveCurrentEntry(){
   pt.peak=document.getElementById('inputPeak').value;
   pt.location=document.getElementById('inputLocation').value;
   pt.notes=document.getElementById('inputNotes').value;
+  var psv=document.getElementById('inputPinSize');
+  if(psv)pt.pinSize=psv.value===''?null:parseInt(psv.value)||null;
 }
 function confirmDeletePoint(){
   if(!currentPointId)return;
@@ -851,6 +977,7 @@ function renderEntry(){
   document.getElementById('inputPeak').value=pt.peak;
   document.getElementById('inputLocation').value=pt.location;
   document.getElementById('inputNotes').value=pt.notes||'';
+  var psf=document.getElementById('inputPinSize');if(psf)psf.value=pt.pinSize||'';
   document.getElementById('inputDb').classList.remove('field-error');
   document.getElementById('inputPeak').classList.remove('field-error');
   if(floor.planImage&&pt.pinX===null)pinHint.classList.remove('hidden');else pinHint.classList.add('hidden');
@@ -984,7 +1111,23 @@ function loadFloorPlan(){
   var zc=document.getElementById('zoomControls');var legend=document.getElementById('planLegend');var epb=document.getElementById('exportPlanBtn');planImg=null;
   if(!floor||!floor.planImage){canvas.style.display='none';dropZone.style.display='flex';zc.style.display='none';legend.style.display='none';if(epb)epb.style.display='none';document.getElementById('planToolbarLabel').textContent='Floor Plan';return;}
   var img=new Image();
-  img.onload=function(){planImg=img;canvas.style.display='block';dropZone.style.display='none';zc.style.display='flex';legend.style.display='flex';if(epb)epb.style.display='block';resetView();document.getElementById('planToolbarLabel').textContent=gcf()?gcf().name:'Floor Plan';renderEntry();};
+  img.onload=function(){
+    planImg=img;
+    canvas.style.display='block';
+    dropZone.style.display='none';
+    zc.style.display='flex';
+    legend.style.display='flex';
+    if(epb)epb.style.display='block';
+    document.getElementById('planToolbarLabel').textContent=gcf()?gcf().name:'Floor Plan';
+    // Defer draw until wrapper has layout dimensions (important on mobile when view is off-screen)
+    function tryDraw(attempts){
+      var w=document.getElementById('planWrapper');
+      if(w&&w.clientWidth>0){resetView();renderEntry();}
+      else if(attempts>0){setTimeout(function(){tryDraw(attempts-1);},80);}
+    }
+    tryDraw(10);
+  };
+  img.onerror=function(){showToast('Could not load floor plan image',true);gcf().planImage=null;};
   img.src=floor.planImage;
 }
 function loadPlan(e){
@@ -1023,57 +1166,102 @@ function dbColour(db){
   if(v<90)return'#d73027';
   return'#7b2d8b';
 }
-function drawPoints(ctx,floor,scale,ox,oy,activeId){
-  // PIN_R: fixed screen-pixel radius regardless of zoom
-  // When exporting (scale != viewScale) we scale up proportionally for print quality
-  var isExport=(scale!==viewScale);
+function getPinR(pt,isActive,scale,referenceScale){
+  // Returns a screen-pixel radius that is CONSTANT regardless of zoom.
+  // For export (scale >> viewScale) we scale up for print quality.
+  var base=(pt&&pt.pinSize)?pt.pinSize:globalPinSize;
+  var exportMult=(referenceScale&&referenceScale>0)?scale/referenceScale:1;
+  return Math.round(base*(isActive?1.3:1)*exportMult);
+}
+function strokeText(ctx,text,x,y,strokeW,strokeCol,fillCol){
+  ctx.lineWidth=strokeW;ctx.strokeStyle=strokeCol;ctx.lineJoin='round';
+  ctx.strokeText(text,x,y);
+  ctx.fillStyle=fillCol;ctx.fillText(text,x,y);
+}
+function drawPoints(ctx,floor,scale,ox,oy,activeId,referenceScale){
+  var refScale=referenceScale||scale;
   floor.points.forEach(function(pt){
     if(pt.pinX===null||pt.pinY===null)return;
     var sx=pt.pinX*scale+ox,sy=pt.pinY*scale+oy;
     var isActive=pt.id===activeId;
-    var r=isExport?(isActive?28:22):(isActive?18:14);
+    var r=getPinR(pt,isActive,scale,refScale);
     var fill=dbColour(pt.db);
-    // Drop shadow
-    ctx.shadowColor='rgba(0,0,0,0.35)';ctx.shadowBlur=isActive?18:8;ctx.shadowOffsetY=2;
-    // Outer ring for selected
+    var bright=fill==='#a6d96a'||fill==='#fdae61'||fill==='#aaaaaa';
+    var labelCol=bright?'#111':'#fff';
+
+    // ── Strong drop shadow ──
+    ctx.shadowColor='rgba(0,0,0,0.55)';ctx.shadowBlur=8;ctx.shadowOffsetY=3;
+
+    // ── Selected pulse ring ──
     if(isActive){
-      ctx.beginPath();ctx.arc(sx,sy,r+4,0,Math.PI*2);
-      ctx.fillStyle='rgba(0,102,204,0.25)';ctx.fill();
+      ctx.beginPath();ctx.arc(sx,sy,r+7,0,Math.PI*2);
+      ctx.fillStyle='rgba(0,102,204,0.28)';ctx.fill();
     }
-    // Main circle
+
+    // ── Thick white outline (makes pin pop off any background) ──
+    ctx.beginPath();ctx.arc(sx,sy,r+3,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,0.95)';ctx.fill();
+    ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+
+    // ── Coloured fill circle ──
     ctx.beginPath();ctx.arc(sx,sy,r,0,Math.PI*2);
     ctx.fillStyle=fill;ctx.fill();
-    ctx.strokeStyle=isActive?'#0066cc':'rgba(255,255,255,0.9)';
-    ctx.lineWidth=isActive?3:2.5;ctx.stroke();
-    ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetY=0;
-    // Point ID label inside circle
-    ctx.font='bold '+(isActive?11:10)+'px DM Mono,monospace';
+
+    // ── Active border ring ──
+    if(isActive){
+      ctx.beginPath();ctx.arc(sx,sy,r,0,Math.PI*2);
+      ctx.strokeStyle='#0066cc';ctx.lineWidth=3;ctx.stroke();
+    }
+
+    // ── Point ID inside pin — bold with text outline for contrast ──
+    var fontSize=Math.max(9,Math.round(r*0.72));
+    ctx.font='900 '+fontSize+'px DM Sans,sans-serif';
     ctx.textAlign='center';ctx.textBaseline='middle';
-    // Dark text on light colours, white on dark
-    var bright=fill==='#a6d96a'||fill==='#fdae61'||fill==='#aaaaaa';
-    ctx.fillStyle=bright?'#1a2332':'#ffffff';
-    ctx.fillText('P'+String(pt.id).padStart(3,'0'),sx,sy);
-    // dB callout bubble above pin
+    strokeText(ctx,'P'+String(pt.id).padStart(3,'0'),sx,sy,3,
+      bright?'rgba(255,255,255,0.6)':'rgba(0,0,0,0.4)',labelCol);
+
+    // ── dB callout: white pill with coloured left bar ──
     if(pt.db!==''){
       var label=parseFloat(pt.db).toFixed(1)+' dB';
-      ctx.font='bold 12px DM Sans,sans-serif';
+      var pillFont=Math.max(11,Math.round(r*0.78));
+      ctx.font='700 '+pillFont+'px DM Sans,sans-serif';
       var tw=ctx.measureText(label).width;
-      var bw=tw+14,bh=20,bx=sx-bw/2,by=sy-r-bh-6;
-      // Bubble background in same colour
+      var ph=pillFont+10,pw=tw+22,px=sx-pw/2,py=sy-r-ph-8;
+
+      // Pill shadow
+      ctx.shadowColor='rgba(0,0,0,0.4)';ctx.shadowBlur=6;ctx.shadowOffsetY=2;
+
+      // White pill background
       ctx.beginPath();
-      if(ctx.roundRect)ctx.roundRect(bx,by,bw,bh,6);else ctx.rect(bx,by,bw,bh);
+      if(ctx.roundRect)ctx.roundRect(px,py,pw,ph,ph/2);
+      else ctx.rect(px,py,pw,ph);
+      ctx.fillStyle='rgba(255,255,255,0.97)';ctx.fill();
+      ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+
+      // Coloured left accent bar
+      ctx.beginPath();
+      if(ctx.roundRect)ctx.roundRect(px,py,6,ph,ph/2);
+      else ctx.rect(px,py,6,ph);
       ctx.fillStyle=fill;ctx.fill();
-      ctx.strokeStyle='rgba(255,255,255,0.6)';ctx.lineWidth=1.5;ctx.stroke();
-      // Pointer triangle
-      ctx.beginPath();ctx.moveTo(sx-6,by+bh);ctx.lineTo(sx+6,by+bh);ctx.lineTo(sx,by+bh+6);
-      ctx.fillStyle=fill;ctx.fill();
-      // Label text
-      ctx.fillStyle=bright?'#1a2332':'#ffffff';
-      ctx.font='bold 12px DM Sans,sans-serif';
+
+      // Connector line from pill to circle
+      ctx.beginPath();ctx.moveTo(sx,py+ph);ctx.lineTo(sx,sy-r-3);
+      ctx.strokeStyle='rgba(255,255,255,0.9)';ctx.lineWidth=2;ctx.stroke();
+      ctx.beginPath();ctx.moveTo(sx,py+ph);ctx.lineTo(sx,sy-r-3);
+      ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=1;ctx.stroke();
+
+      // Label text — dark on white pill
+      ctx.font='700 '+pillFont+'px DM Sans,sans-serif';
       ctx.textAlign='center';ctx.textBaseline='middle';
-      ctx.fillText(label,sx,by+bh/2);
+      ctx.fillStyle='#1a2332';
+      ctx.fillText(label,sx+3,py+ph/2);
     }
   });
+}
+function changeGlobalPinSize(delta){
+  globalPinSize=Math.max(6,Math.min(40,globalPinSize+delta));
+  var lbl=document.getElementById('pinSizeLabel');if(lbl)lbl.textContent=globalPinSize;
+  drawPlan();
 }
 function drawPlan(){
   var canvas=document.getElementById('planCanvas');if(!canvas||canvas.style.display==='none')return;
@@ -1082,7 +1270,7 @@ function drawPlan(){
   var floor=gcf();if(!floor)return;
   drawHatchZones(ctx,floor,viewScale,viewOffsetX,viewOffsetY);
   if(mode==='hatch')drawHatchInProgress(ctx,viewScale,viewOffsetX,viewOffsetY);
-  drawPoints(ctx,floor,viewScale,viewOffsetX,viewOffsetY,currentPointId);
+  drawPoints(ctx,floor,viewScale,viewOffsetX,viewOffsetY,currentPointId,viewScale);
 }
 function setupCanvasEvents(){
   var canvas=document.getElementById('planCanvas');
@@ -1197,7 +1385,7 @@ function setupCanvasEvents(){
     if(!isPanning)return;viewOffsetX=panOrigin.x+(e.clientX-panStart.x);viewOffsetY=panOrigin.y+(e.clientY-panStart.y);drawPlan();});
   window.addEventListener('mouseup',function(){if(isPanning){isPanning=false;document.getElementById('planCanvas').style.cursor=mode==='pan'?'grab':'crosshair';}});
   canvas.addEventListener('wheel',function(e){e.preventDefault();var f=e.deltaY<0?1.1:0.9;var rect=canvas.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;viewOffsetX=mx-(mx-viewOffsetX)*f;viewOffsetY=my-(my-viewOffsetY)*f;viewScale*=f;drawPlan();},{passive:false});
-  window.addEventListener('resize',function(){if(planImg)drawPlan();});
+  window.addEventListener('resize',function(){if(planImg)resetView();});
 }
 function setMode(m){
   // Cancel any in-progress hatch when switching away
@@ -1382,7 +1570,7 @@ function exportPlanPDF(){
   ctx.drawImage(planImg,0,0,oc.width,oc.height);
   // Draw all points at image coordinates (no viewport transform, use full image coords)
   drawHatchZones(ctx,floor,scale,0,0);
-  drawPoints(ctx,floor,scale,0,0,null);
+  drawPoints(ctx,floor,scale,0,0,null,viewScale);
   // Add header bar at bottom
   var proj=document.getElementById('metaProject').value;
   var site=document.getElementById('metaSite').value;
