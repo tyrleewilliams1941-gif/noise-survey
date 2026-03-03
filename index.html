@@ -14,6 +14,55 @@
     --danger:#d93025;--warn:#e67e00;--success:#2e7d32;--radius:10px;
     --header-h:52px;--tabs-h:40px;--mob-nav-h:56px;
   }
+  [data-theme="dark"]{
+    --bg:#0f1117;--surface:#1a1d27;--surface2:#232635;--border:#2e3347;
+    --accent:#4d9fff;--accent-dim:rgba(77,159,255,0.15);--accent-dim2:rgba(77,159,255,0.07);
+    --text:#e2e8f0;--text-dim:#7a8aaa;--text-mid:#a0aec0;
+    --danger:#ff6b6b;--warn:#ffb347;--success:#5cbf7a;
+  }
+  [data-theme="dark"] body{background:var(--bg);}
+  [data-theme="dark"] input[type="number"],
+  [data-theme="dark"] input[type="text"],
+  [data-theme="dark"] textarea,
+  [data-theme="dark"] select{background:#232635;border-color:#2e3347;color:var(--text);}
+  [data-theme="dark"] .dose-form input,
+  [data-theme="dark"] .dose-form select{background:#232635;border-color:#2e3347;color:var(--text);}
+  [data-theme="dark"] .plan-canvas-wrapper{background:#12151e;}
+  [data-theme="dark"] .plan-drop-zone{border-color:#2e3347;background:#1a1d27;}
+  [data-theme="dark"] .zoom-btn{background:#1a1d27;border-color:#2e3347;color:var(--text-mid);}
+  [data-theme="dark"] .legend{background:rgba(26,29,39,0.97);border-color:#2e3347;}
+  [data-theme="dark"] .export-plan-btn{background:#1a1d27;border-color:var(--accent);color:var(--accent);}
+  [data-theme="dark"] .incomplete-banner{background:#2a1f00;border-color:#5a3e00;color:#ffcc66;}
+  [data-theme="dark"] .undo-bar{background:#1a2540;border-color:#2e4080;color:#89b4ff;}
+  [data-theme="dark"] .undo-bar button{color:#89b4ff;}
+  [data-theme="dark"] .modal{background:#1a1d27;}
+  [data-theme="dark"] .meta-drawer{background:#1a1d27;border-color:#2e3347;}
+  [data-theme="dark"] .dose-ref-note{background:#1a1d27;border-color:#2e3347;}
+  [data-theme="dark"] .summary-card{background:#1a1d27;border-color:#2e3347;}
+  [data-theme="dark"] .summary-row{border-color:#232635;}
+  [data-theme="dark"] .progress-bar-wrap{background:#232635;}
+  [data-theme="dark"] .incomplete-tag{background:#2a1a00;border-color:#5a3e00;color:#ffb347;}
+  [data-theme="dark"] #planCanvas{filter:brightness(0.92);}
+  [data-theme="dark"] .mob-nav{background:#1a1d27;border-color:#2e3347;}
+  [data-theme="dark"] .floor-tabs-bar{background:#1a1d27;border-color:#2e3347;}
+  [data-theme="dark"] header{background:#1a1d27;border-color:#2e3347;}
+  [data-theme="dark"] .sidebar{background:#1a1d27;border-color:#2e3347;}
+  [data-theme="dark"] .entry-card{background:#1a1d27;border-color:#2e3347;}
+  [data-theme="dark"] .stat{background:#1a1d27;border-color:#2e3347;}
+  [data-theme="dark"] .dose-card{background:#1a1d27;border-color:#2e3347;}
+  [data-theme="dark"] .dose-summary-bar{background:#1a1d27;border-color:#2e3347;}
+  [data-theme="dark"] .points-view-header{background:#1a1d27;border-color:#2e3347;}
+  [data-theme="dark"] .plan-toolbar{background:#1a1d27;border-color:#2e3347;}
+  [data-theme="dark"] .sidebar-add-btn{border-color:#2e3347;}
+  [data-theme="dark"] .sidebar-header{border-color:#2e3347;}
+  [data-theme="dark"] .btn-secondary{background:#232635;border-color:#2e3347;color:var(--text-mid);}
+  [data-theme="dark"] .btn-icon{background:#232635;border-color:#2e3347;color:var(--text-mid);}
+  [data-theme="dark"] .label-btn{background:#232635;border-color:#2e3347;color:var(--text-mid);}
+  [data-theme="dark"] .plan-mode-btn{background:#232635;border-color:#2e3347;color:var(--text-mid);}
+  [data-theme="dark"] .plan-mode-btn.active{background:rgba(77,159,255,0.15);border-color:var(--accent);color:var(--accent);}
+  [data-theme="dark"] .point-item.active{background:rgba(77,159,255,0.15);}
+  [data-theme="dark"] .header-meta-row input{background:#232635;border-color:#2e3347;color:var(--text);}
+  [data-theme="dark"] .pin-hint{background:rgba(77,159,255,0.08);border-color:#2e3347;}
 
   body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
 
@@ -216,7 +265,9 @@
   .print-header .print-meta{font-size:12px;color:var(--text-dim);margin-top:6px;display:flex;gap:20px;flex-wrap:wrap;}
 
   /* ═══════ DESKTOP (>= 768px) ═══════ */
+  .mobileOnly{display:inline-flex!important;}
   @media(min-width:768px){
+    .mobileOnly{display:none!important;}
     body{height:100vh;}
     .mob-nav{display:none!important;}
     .meta-drawer{display:none!important;}
@@ -288,6 +339,8 @@
     <input type="text" id="metaSurveyor" placeholder="Surveyor" maxlength="60">
   </div>
   <div class="header-right">
+    <button class="btn-icon mobileOnly" onclick="resetPageZoom()" title="Reset zoom" style="font-size:13px;font-weight:700;">1:1</button>
+    <button class="btn-icon" id="darkModeBtn" onclick="toggleDarkMode()" title="Toggle dark mode">&#9790;</button>
     <button class="btn-icon" onclick="toggleMetaDrawer()" title="Project info" id="metaToggleBtn">&#9432;</button>
     <button class="btn-icon" onclick="undo()" title="Undo">&#8617;</button>
     <button class="btn-export" onclick="exportCSV()">CSV</button>
@@ -428,19 +481,21 @@
     <!-- DOSIMETRY PANEL -->
     <div class="full-panel" id="dosimetryPanel">
       <div>
-        <div class="panel-title">Personal Dosimetry</div>
-        <div class="panel-subtitle">Noise exposure for workers wearing personal dosimeters</div>
+        <div class="panel-title">Dose Badges</div>
+        <div class="panel-subtitle">Noise dose badge records for workers</div>
       </div>
       <div class="dose-ref-note">
         <strong>UK Control of Noise at Work Regs 2005:</strong><br>
         LAEV 80 dB(A) &nbsp;|&nbsp; UAEV 85 dB(A) &nbsp;|&nbsp; ELV 87 dB(A)
       </div>
       <div class="dose-summary-bar">
-        <div class="dose-summary-stat"><div class="slabel">Workers</div><div class="svalue">10</div></div>
+        <div class="dose-summary-stat"><div class="slabel">Workers</div><div class="svalue" id="doseStatTotal">10</div></div>
         <div class="dose-summary-stat"><div class="slabel">Recorded</div><div class="svalue" id="doseStatRecorded">0</div></div>
         <div class="dose-summary-stat"><div class="slabel">Above LAEV</div><div class="svalue" id="doseStatLAEV" style="color:var(--warn)">0</div></div>
         <div class="dose-summary-stat"><div class="slabel">Above UAEV</div><div class="svalue" id="doseStatUAEV" style="color:var(--danger)">0</div></div>
-        <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;">
+        <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <button class="btn-secondary btn-sm" onclick="removeDoseWorker()" title="Remove last worker" style="font-size:18px;padding:4px 11px;line-height:1;">&#8722;</button>
+          <button class="btn-secondary btn-sm" onclick="addDoseWorker()" title="Add worker" style="font-size:18px;padding:4px 11px;line-height:1;">+</button>
           <button class="btn-export" onclick="exportDosimetryCSV()">Export CSV</button>
           <button class="btn-secondary btn-sm" onclick="clearAllDosimetry()">Clear All</button>
         </div>
@@ -467,7 +522,7 @@
       <span class="nav-icon">&#128202;</span>Summary
     </button>
     <button class="mob-nav-btn" id="navBtnDose" onclick="showView('dosimetryView')">
-      <span class="nav-icon">&#128100;</span>Dose
+      <span class="nav-icon">&#128100;</span>Badges
     </button>
   </div>
 </nav>
@@ -500,10 +555,36 @@
 var floors=[],currentFloorId=null,currentPointId=null,activeView='formView',activeFloorView='floor';
 var floorModalMode='add',floorIdCounter=0,pointIdCounter={},undoStack=[];
 var dosimetryData=Array.from({length:10},function(_,i){return{slot:i+1,name:'',title:'',hoursWork:'',laeqd:'',lcpeak:'',hpType:'',hpRating:'',notes:''};});
+function makeDoseWorker(slot){return{slot:slot,name:'',title:'',hoursWork:'',laeqd:'',lcpeak:'',hpType:'',hpRating:'',notes:''};}
 var planImg=null,viewOffsetX=0,viewOffsetY=0,viewScale=1,mode='pin';
 var hatchPoints=[],isDrawingHatch=false,hatchPreview=null;
 var isPanning=false,panStart={x:0,y:0},panOrigin={x:0,y:0};
 var isMobile=function(){return window.innerWidth<768;};
+function resetPageZoom(){
+  // Force viewport back to 1:1 by toggling the meta viewport tag
+  var mv=document.querySelector('meta[name=viewport]');
+  if(!mv)return;
+  // Temporarily allow user scaling so the browser resets, then lock again
+  mv.content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes';
+  // Tiny delay then re-lock
+  setTimeout(function(){
+    mv.content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+  }, 50);
+  showToast('Zoom reset');
+}
+function toggleDarkMode(){
+  var isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  var next=isDark?'light':'dark';
+  document.documentElement.setAttribute('data-theme',next);
+  document.getElementById('darkModeBtn').textContent=next==='dark'?'☀':'☽';
+  try{localStorage.setItem('ns_theme',next);}catch(e){}
+}
+function applyStoredTheme(){
+  try{
+    var t=localStorage.getItem('ns_theme');
+    if(t==='dark'){document.documentElement.setAttribute('data-theme','dark');document.getElementById('darkModeBtn').textContent='☀';}
+  }catch(e){}
+}
 var HP_TYPES=['None','Earplugs (disposable)','Earplugs (reusable)','Earmuffs','Custom moulded','Earmuffs + earplugs'];
 
 function gfid(){return'f'+(++floorIdCounter);}
@@ -558,6 +639,7 @@ function renderAll(){renderFloorTabs();renderSidebars();renderEntry();renderStat
 
 // ── INIT ──
 window.onload=function(){
+  applyStoredTheme();
   addFloorDirect('Ground Floor');
   setupCanvasEvents();setupDragDrop();renderDosimetryGrid();
   setInterval(function(){try{saveCurrentEntry();localStorage.setItem('ns_as',JSON.stringify({floors:floors.map(function(f){return Object.assign({},f,{planImage:null});}),dosimetryData:dosimetryData,floorIdCounter:floorIdCounter,pointIdCounter:pointIdCounter}));}catch(e){}},30000);
@@ -655,7 +737,7 @@ function showSummary(){
   renderFloorTabs();renderSummary();
 }
 function showDosimetry(){
-  saveCurrentEntry();activeFloorView='dosimetry';currentPointId=null;
+  saveCurrentEntry();activeFloorView='dosebadges';currentPointId=null;
   document.getElementById('summaryPanel').classList.remove('visible');
   document.getElementById('dosimetryPanel').classList.add('visible');
   var fv=document.getElementById('formView'),pv=document.getElementById('planView'),ptv=document.getElementById('pointsView');
@@ -677,8 +759,8 @@ function renderFloorTabs(){
   });
   var sb=document.createElement('button');sb.className='floor-tab special-tab'+(activeFloorView==='summary'?' active':'');
   sb.textContent='Summary';sb.onclick=showSummary;bar.insertBefore(sb,addBtn);
-  var db=document.createElement('button');db.className='floor-tab special-tab'+(activeFloorView==='dosimetry'?' active':'');
-  db.textContent='Dosimetry';db.onclick=showDosimetry;bar.insertBefore(db,addBtn);
+  var db=document.createElement('button');db.className='floor-tab special-tab'+(activeFloorView==='dosebadges'?' active':'');
+  db.textContent='Dose Badges';db.onclick=showDosimetry;bar.insertBefore(db,addBtn);
 }
 
 // ── POINTS ──
@@ -855,12 +937,29 @@ function updateDoseSummary(){
   var rec=dosimetryData.filter(function(w){return w.laeqd!=='';}).length;
   var laev=dosimetryData.filter(function(w){return w.laeqd!==''&&parseFloat(w.laeqd)>=80;}).length;
   var uaev=dosimetryData.filter(function(w){return w.laeqd!==''&&parseFloat(w.laeqd)>=85;}).length;
+  var tot=document.getElementById('doseStatTotal');if(tot)tot.textContent=dosimetryData.length;
   document.getElementById('doseStatRecorded').textContent=rec;
   document.getElementById('doseStatLAEV').textContent=laev;
   document.getElementById('doseStatUAEV').textContent=uaev;
 }
+function addDoseWorker(){
+  snapshot('add dose worker');
+  dosimetryData.push(makeDoseWorker(dosimetryData.length+1));
+  renderDosimetryGrid();
+  // scroll to bottom of panel
+  var panel=document.getElementById('dosimetryPanel');
+  if(panel)setTimeout(function(){panel.scrollTop=panel.scrollHeight;},50);
+  showToast('Worker '+(dosimetryData.length)+' added');
+}
+function removeDoseWorker(){
+  if(dosimetryData.length<=1){showToast('Must keep at least 1 worker',true);return;}
+  snapshot('remove dose worker');
+  dosimetryData.pop();
+  renderDosimetryGrid();
+  showToast('Worker removed');
+}
 function clearAllDosimetry(){
-  if(!confirm('Clear all dosimetry data?'))return;
+  if(!confirm('Clear all dose badge data?'))return;
   snapshot('clear dosimetry');
   dosimetryData=Array.from({length:10},function(_,i){return{slot:i+1,name:'',title:'',hoursWork:'',laeqd:'',lcpeak:'',hpType:'',hpRating:'',notes:''};});
   renderDosimetryGrid();showToast('Cleared');
@@ -876,7 +975,7 @@ function exportDosimetryCSV(){
   var blob=new Blob([csv],{type:'text/csv'});var url=URL.createObjectURL(blob);var a=document.createElement('a');
   var name=(proj||site||'dosimetry').replace(/[^a-z0-9]/gi,'_').toLowerCase();
   a.href=url;a.download=name+'-dosimetry-'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(url);
-  showToast('Dosimetry CSV exported');
+  showToast('Dose badges CSV exported');
 }
 
 // ── FLOOR PLAN ──
@@ -901,6 +1000,8 @@ function clearPlan(){
 }
 function setupDragDrop(){
   var wrapper=document.getElementById('planWrapper');
+  // Prevent iOS Safari from hijacking pinch gestures on the plan canvas
+  wrapper.addEventListener('touchmove',function(e){if(e.touches.length>1)e.preventDefault();},{passive:false});
   wrapper.addEventListener('dragover',function(e){e.preventDefault();});
   wrapper.addEventListener('drop',function(e){
     e.preventDefault();var file=e.dataTransfer.files[0];
@@ -923,11 +1024,14 @@ function dbColour(db){
   return'#7b2d8b';
 }
 function drawPoints(ctx,floor,scale,ox,oy,activeId){
+  // PIN_R: fixed screen-pixel radius regardless of zoom
+  // When exporting (scale != viewScale) we scale up proportionally for print quality
+  var isExport=(scale!==viewScale);
   floor.points.forEach(function(pt){
     if(pt.pinX===null||pt.pinY===null)return;
     var sx=pt.pinX*scale+ox,sy=pt.pinY*scale+oy;
     var isActive=pt.id===activeId;
-    var r=isActive?18:14;
+    var r=isExport?(isActive?28:22):(isActive?18:14);
     var fill=dbColour(pt.db);
     // Drop shadow
     ctx.shadowColor='rgba(0,0,0,0.35)';ctx.shadowBlur=isActive?18:8;ctx.shadowOffsetY=2;
@@ -1045,8 +1149,9 @@ function setupCanvasEvents(){
         }
       }
     }
-    if(e.touches.length===0)touchMode='none';
+    if(e.touches.length===0){touchMode='none';hatchPreview=null;}
   },{passive:false});
+  canvas.addEventListener('touchcancel',function(){touchMode='none';hatchPreview=null;isPanning=false;},{passive:true});
 
   // Mouse events (desktop)
   canvas.addEventListener('dblclick',function(e){
@@ -1237,7 +1342,7 @@ function loadSession(e){
       }
       currentFloorId=floors[0]?floors[0].id:null;currentPointId=null;
       renderAll();loadFloorPlan();
-      if(activeFloorView==='dosimetry')renderDosimetryGrid();
+      if(activeFloorView==='dosebadges')renderDosimetryGrid();
       showToast('Session loaded');
     }catch(err){showToast('Could not load: '+err.message,true);}
   };
