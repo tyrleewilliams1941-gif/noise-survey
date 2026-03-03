@@ -73,13 +73,18 @@
   .header-meta-row{display:none;} /* hidden on mobile, shown desktop */
 
   /* ── TABS ── */
-  .floor-tabs-bar{background:var(--surface);border-bottom:1px solid var(--border);height:var(--tabs-h);display:flex;align-items:center;gap:0;overflow-x:auto;flex-shrink:0;-webkit-overflow-scrolling:touch;}
+  .floor-tabs-bar{background:var(--surface);border-bottom:1px solid var(--border);height:var(--tabs-h);display:flex;align-items:center;gap:0;overflow-x:auto;flex-shrink:0;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory;}
   .floor-tabs-bar::-webkit-scrollbar{display:none;}
-  .floor-tab{padding:0 14px;height:var(--tabs-h);font-size:13px;font-weight:500;color:var(--text-dim);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s;font-family:'DM Sans',sans-serif;flex-shrink:0;}
+  .floor-tab{padding:0 12px;height:var(--tabs-h);font-size:13px;font-weight:500;color:var(--text-dim);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s;font-family:'DM Sans',sans-serif;flex-shrink:0;scroll-snap-align:start;}
   .floor-tab:hover{color:var(--text-mid);}
   .floor-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
   .floor-tab.special-tab{font-style:italic;}
-  .add-floor-btn{padding:0 12px;height:var(--tabs-h);font-size:20px;color:var(--text-dim);background:none;border:none;cursor:pointer;flex-shrink:0;line-height:1;}
+  .add-floor-btn{padding:0 10px;height:var(--tabs-h);font-size:20px;color:var(--text-dim);background:none;border:none;cursor:pointer;flex-shrink:0;line-height:1;}
+  /* Mobile: smaller tab text and tighter padding */
+  @media(max-width:767px){
+    .floor-tab{font-size:12px;padding:0 10px;}
+    .floor-tab.special-tab{display:none;} /* special tabs go in bottom nav on mobile */
+  }
 
   /* ── MAIN LAYOUT ── */
   .main{display:flex;flex:1;overflow:hidden;}
@@ -236,11 +241,11 @@
   .dose-badge.elv{background:#ffebee;color:var(--danger);}
 
   /* MOBILE BOTTOM NAV */
-  .mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:var(--mob-nav-h);background:var(--surface);border-top:1px solid var(--border);z-index:50;padding:0 4px;}
+  .mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:var(--mob-nav-h);background:var(--surface);border-top:1px solid var(--border);z-index:50;padding:0 2px;}
   .mob-nav-inner{display:flex;height:100%;}
-  .mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:none;background:none;color:var(--text-dim);font-size:9px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;padding:6px 4px;-webkit-tap-highlight-color:transparent;border-top:2px solid transparent;}
+  .mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:none;background:none;color:var(--text-dim);font-size:8px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.04em;cursor:pointer;padding:5px 2px;-webkit-tap-highlight-color:transparent;border-top:2px solid transparent;min-width:0;}
   .mob-nav-btn.active{color:var(--accent);border-top-color:var(--accent);}
-  .mob-nav-btn .nav-icon{font-size:20px;line-height:1;}
+  .mob-nav-btn .nav-icon{font-size:18px;line-height:1;}
 
   /* MOB: meta drawer */
   .meta-drawer{display:none;position:fixed;top:var(--header-h);left:0;right:0;background:var(--surface);border-bottom:1px solid var(--border);padding:10px 14px;gap:8px;z-index:40;flex-direction:column;box-shadow:0 4px 12px rgba(0,0,0,.1);}
@@ -256,6 +261,9 @@
   .modal p{font-size:14px;color:var(--text-dim);margin-bottom:18px;line-height:1.5;}
 
   /* MISC */
+  /* Fixed zoom reset — always accessible even when page is zoomed */
+  .zoom-reset-fab{display:none;position:fixed;bottom:calc(var(--mob-nav-h) + 10px);right:12px;z-index:300;width:40px;height:40px;border-radius:50%;background:var(--accent);color:#fff;border:none;font-size:12px;font-weight:800;font-family:'DM Mono',monospace;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,0.3);-webkit-tap-highlight-color:transparent;align-items:center;justify-content:center;}
+  @media(max-width:767px){.zoom-reset-fab{display:flex;}}
   .hidden{display:none!important;}
   .toast{position:fixed;bottom:calc(var(--mob-nav-h) + 10px);left:50%;transform:translateX(-50%) translateY(20px);background:var(--accent);color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;font-weight:500;opacity:0;transition:all .25s;z-index:200;pointer-events:none;white-space:nowrap;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -339,13 +347,12 @@
     <input type="text" id="metaSurveyor" placeholder="Surveyor" maxlength="60">
   </div>
   <div class="header-right">
-    <button class="btn-icon mobileOnly" onclick="resetPageZoom()" title="Reset zoom" style="font-size:13px;font-weight:700;">1:1</button>
     <button class="btn-icon" id="darkModeBtn" onclick="toggleDarkMode()" title="Toggle dark mode">&#9790;</button>
     <button class="btn-icon" onclick="toggleMetaDrawer()" title="Project info" id="metaToggleBtn">&#9432;</button>
     <button class="btn-icon" onclick="undo()" title="Undo">&#8617;</button>
-    <button class="btn-export" onclick="exportCSV()">CSV</button>
+    <button class="btn-export desktopOnly" onclick="exportCSV()">CSV</button>
     <button class="btn-secondary btn-sm" onclick="saveSession()">Save</button>
-    <button class="btn-secondary btn-sm" onclick="document.getElementById('loadFileInput').click()">Load</button>
+    <button class="btn-secondary btn-sm desktopOnly" onclick="document.getElementById('loadFileInput').click()">Load</button>
     <input type="file" id="loadFileInput" accept=".json" style="display:none" onchange="loadSession(event)">
     <button class="btn-secondary btn-sm desktopOnly" onclick="openRenameFloor()">Rename</button>
     <button class="btn-danger btn-sm desktopOnly" onclick="deleteFloor()">Delete Floor</button>
@@ -358,6 +365,8 @@
   <input type="text" id="metaSiteM" placeholder="Site / building" maxlength="80">
   <input type="text" id="metaSurveyorM" placeholder="Surveyor" maxlength="60">
   <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <button class="btn-secondary btn-sm" onclick="document.getElementById('loadFileInput').click();toggleMetaDrawer()">Load Session</button>
+    <button class="btn-export btn-sm" onclick="exportCSV();toggleMetaDrawer()">Export CSV</button>
     <button class="btn-secondary btn-sm" onclick="openRenameFloor()">Rename Floor</button>
     <button class="btn-danger btn-sm" onclick="deleteFloor()">Delete Floor</button>
     <button class="btn-secondary btn-sm" onclick="document.getElementById('planFileInput').click()">Import Plan</button>
@@ -546,6 +555,9 @@
     <button class="mob-nav-btn" id="navBtnDose" onclick="showView('dosimetryView')">
       <span class="nav-icon">&#128100;</span>Badges
     </button>
+    <button class="mob-nav-btn" id="navBtnLog" onclick="showLog()">
+      <span class="nav-icon">&#128196;</span>Log
+    </button>
   </div>
 </nav>
 
@@ -572,6 +584,8 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<button class="zoom-reset-fab" onclick="resetPageZoom()" title="Reset page zoom">1:1</button>
 
 <script>
 var floors=[],currentFloorId=null,currentPointId=null,activeView='formView',activeFloorView='floor';
@@ -684,7 +698,7 @@ function showView(viewName){
 
   // nav buttons
   var navMap={pointsView:'navBtnPoints',formView:'navBtnForm',planView:'navBtnPlan'};
-  ['navBtnPoints','navBtnForm','navBtnPlan','navBtnSummary','navBtnDose'].forEach(function(b){
+  ['navBtnPoints','navBtnForm','navBtnPlan','navBtnSummary','navBtnDose','navBtnLog'].forEach(function(b){
     var el=document.getElementById(b);if(el)el.classList.remove('active');
   });
   if(navMap[viewName]){var nb=document.getElementById(navMap[viewName]);if(nb)nb.classList.add('active');}
@@ -762,7 +776,7 @@ function showSummary(){
   document.getElementById('logPanel').classList.remove('visible');
   var fv=document.getElementById('formView'),pv=document.getElementById('planView'),ptv=document.getElementById('pointsView');
   if(fv)fv.classList.remove('active');if(pv)pv.classList.remove('active');if(ptv)ptv.classList.remove('active');
-  ['navBtnPoints','navBtnForm','navBtnPlan','navBtnDose'].forEach(function(b){var e=document.getElementById(b);if(e)e.classList.remove('active');});
+  ['navBtnPoints','navBtnForm','navBtnPlan','navBtnDose','navBtnLog'].forEach(function(b){var e=document.getElementById(b);if(e)e.classList.remove('active');});
   var nb=document.getElementById('navBtnSummary');if(nb)nb.classList.add('active');
   renderFloorTabs();renderSummary();
 }
@@ -773,7 +787,7 @@ function showDosimetry(){
   document.getElementById('logPanel').classList.remove('visible');
   var fv=document.getElementById('formView'),pv=document.getElementById('planView'),ptv=document.getElementById('pointsView');
   if(fv)fv.classList.remove('active');if(pv)pv.classList.remove('active');if(ptv)ptv.classList.remove('active');
-  ['navBtnPoints','navBtnForm','navBtnPlan','navBtnSummary'].forEach(function(b){var e=document.getElementById(b);if(e)e.classList.remove('active');});
+  ['navBtnPoints','navBtnForm','navBtnPlan','navBtnSummary','navBtnLog'].forEach(function(b){var e=document.getElementById(b);if(e)e.classList.remove('active');});
   var nb=document.getElementById('navBtnDose');if(nb)nb.classList.add('active');
   renderFloorTabs();renderDosimetryGrid();
 }
@@ -783,7 +797,8 @@ function showLog(){
   document.getElementById('logPanel').classList.add('visible');
   var fv=document.getElementById('formView'),pv=document.getElementById('planView'),ptv=document.getElementById('pointsView');
   if(fv)fv.classList.remove('active');if(pv)pv.classList.remove('active');if(ptv)ptv.classList.remove('active');
-  ['navBtnPoints','navBtnForm','navBtnPlan','navBtnSummary','navBtnDose'].forEach(function(b){var e=document.getElementById(b);if(e)e.classList.remove('active');});
+  ['navBtnPoints','navBtnForm','navBtnPlan','navBtnSummary','navBtnDose','navBtnLog'].forEach(function(b){var e=document.getElementById(b);if(e)e.classList.remove('active');});
+  var nb=document.getElementById('navBtnLog');if(nb)nb.classList.add('active');
   renderFloorTabs();renderLog();
 }
 function renderLog(){
